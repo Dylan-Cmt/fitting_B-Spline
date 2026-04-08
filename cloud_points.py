@@ -5,10 +5,10 @@ import numpy as np
 def generate_circle_cloud_points(num_points, noise_level):
     points = []
     for _ in range(num_points):
-        angle = rd.uniform(0, 2 * np.pi)  # Random angle between 0 and 2π
-        radius = 1 + rd.uniform(-noise_level, noise_level)  # Radius with noise
-        x = radius * np.cos(angle)  # X coordinate
-        y = radius * np.sin(angle)  # Y coordinate
+        angle = rd.uniform(0, 2 * np.pi)
+        radius = 1 + rd.uniform(-noise_level, noise_level)
+        x = radius * np.cos(angle)
+        y = radius * np.sin(angle)
         points.append((x, y))
     return points
 
@@ -52,7 +52,7 @@ def generate_c_cloud_points(num_points, noise_level):
 def generate_sinus_cloud_points(num_points):
     points = []
     for _ in range(num_points):
-        x = rd.uniform(0, 9)  # Random x between 1 and 8
+        x = rd.uniform(0, 9)
         y = np.sin(x) 
         points.append((x, y))
     return np.array(points)
