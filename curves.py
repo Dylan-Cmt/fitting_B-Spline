@@ -84,6 +84,8 @@ def evalbsplinecurve_derivative(degree, nodes, control_points, sample=300):
     return evalbsplinecurve(new_degree, new_nodes, new_control_points, sample)
 
 def evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t):
+    if degree == 0:
+        return np.zeros(control_points.shape[1])
     return evalbsplinecurve_at_t(degree - 1, nodes[1:-1], hodograph(degree, nodes, control_points), t)
 
 
