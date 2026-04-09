@@ -88,6 +88,19 @@ def evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t):
         return np.zeros(control_points.shape[1])
     return evalbsplinecurve_at_t(degree - 1, nodes[1:-1], hodograph(degree, nodes, control_points), t)
 
+def evalbsplinecurve_second_derivative(degree, nodes, control_points, sample=300):
+    if degree < 2:
+        return np.zeros(control_points.shape[1])
+    first_derivative_control_points = hodograph(degree, nodes, control_points)
+    second_derivative_control_points = hodograph(degree - 1, nodes[1:-1], first_derivative_control_points)
+    return evalbsplinecurve(degree - 2, nodes[2:-2], second_derivative_control_points, sample)
+
+def evalbsplinecurve_second_derivative_at_t(degree, nodes, control_points, t):
+    if degree < 2:
+        return np.zeros(control_points.shape[1])
+    first_derivative_control_points = hodograph(degree, nodes, control_points)
+    second_derivative_control_points = hodograph(degree - 1, nodes[1:-1], first_derivative_control_points)
+    return evalbsplinecurve_at_t(degree - 2, nodes[2:-2], second_derivative_control_points, t)
 
 ##############################################################################################
 ##                                                                                          ##
@@ -95,7 +108,6 @@ def evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t):
 ##                                                                                          ##
 ##############################################################################################
 
-# Compute the tangent unit vector of a B-Spline curve at a given parameter t
 def tangent_unit_vector(degree, nodes, control_points, t):
     d1 = evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t)
     norm_d1 = np.linalg.norm(d1)
@@ -103,10 +115,30 @@ def tangent_unit_vector(degree, nodes, control_points, t):
         return np.zeros_like(d1)
     return d1 / norm_d1
 
-# Compute the normal unit vector of a B-Spline curve at a given parameter t
-def normal_unit_vector(degree, nodes, control_points, t):
-    tangent = tangent_unit_vector(degree, nodes, control_points, t)
-    normal = np.array([-tangent[1], tangent[0]])
+def normal_unit_vector(tangent_unit_vector):
+    normal = np.array([-tangent_unit_vector[1], tangent_unit_vector[0]])
     return normal
 
+"""
+J'admets pour le moment que j'ai réussi à calculer les tk assiciés à chaque Xk.
+"""
+def foot_points(bspline, bspline_derivative, Xk):
+    # Preprocessing
+
+    # Query
+
+    tk = 1
+    return tk
+
+# Distance between Xk and P(tk)
+def d(Xk, Ptk):
+    return np.linalg.norm(Xk - Ptk)
+
+
+# ex: curvature_at_tk(P'(tk) , P''(tk))
+def curvature_at_tk(Pprime, Pprimprim):
+    denom = np.linalg.norm(Pprime) ** 3
+    if denom == 0:
+        return 0
+    return 
 
