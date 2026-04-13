@@ -9,17 +9,28 @@ if __name__ == "__main__":
     #                         Cloud points generation                            #
     #                                                                            #
     ##############################################################################
+    
+    """
     num_points = 100  
-    noise_level = 0.05
+    noise_level = 0.0
     # circle or square or c or sinus
-    cloud_points = generate_sinus_cloud_points(num_points)
-    #visualize_points(cloud_points)
+    cloud_points = generate_sinus_cloud_points(num_points, noise_level)
+    plt.title('Sinus Shaped Cloud Points with Noise Level 0.0')
+    visualize_points(cloud_points)
+    """
 
     ##############################################################################
     #                                                                            #
     #                         B-Spline curve initialization                      #
     #                                                                            #
     ##############################################################################
+    
+    """
+    num_points = 100  
+    noise_level = 0.0
+    # circle or square or c or sinus
+    cloud_points = generate_sinus_cloud_points(num_points, noise_level)
+
     nodes = np.concatenate([
     np.zeros(3),
     np.linspace(0, 1, 8),
@@ -27,56 +38,140 @@ if __name__ == "__main__":
     ])
 
     degree = 3
-
-    control_points = np.arange(10)[:, np.newaxis]
+    
+    
+    control_points = np.linspace(0,1,10)[:, np.newaxis]
     control_points = np.hstack((control_points, np.zeros_like(control_points)))
-    """
+    
     control_points = np.array(
     [
-        [0, 0],
-        [1, 0],
-        [2, 0],
-        [3, 0],
-        [4, 1],
-        [5, 0],
-        [6, 0],
-        [7, 0],
-        [8, 0],
-        [9, 0],
+        [0,   0],
+        [1/9, 0],
+        [2/9, 0],
+        [3/9, 0],
+        [4/9, 0],
+        [5/9, 0],
+        [6/9, 0],
+        [7/9, 0],
+        [8/9, 0],
+        [9/9, 0],
     ]
     )
+    
+
+    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=50)
+
+    plt.title('Sinus Shaped Cloud Points without Noise and Initial B-Spline Curve')
+    visualize_two_sets_of_points(cloud_points, curve_points)
     """
-
-    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=300)
-    #visualize_points(curve_points)
-
-    #plt.title('Sinus Shaped Cloud Points without Noise')
-    #visualize_two_sets_of_points(cloud_points, curve_points)
-
+    
     ##############################################################################
     #                                                                            #
     #               Visualization of the curve + a specific point                #
     #                                                                            #
     ##############################################################################
 
-    t_min = nodes[degree]
-    t_max = nodes[-degree - 1]
+    """num_points = 100
+    noise_level = 0.0
+    # circle or square or c or sinus
+    cloud_points = generate_sinus_cloud_points(num_points, noise_level)
 
-    tk = 28455/30000
+    nodes = np.concatenate([
+    np.zeros(3),
+    np.linspace(0, 1, 8),
+    np.ones(3)
+    ])
+
+    degree = 3
+    
+    control_points = np.array(
+    [
+        [0,   0],
+        [1/9, 0],
+        [2/9, 0],
+        [3/9, 0],
+        [4/9, 0],
+        [5/9, 0],
+        [6/9, 0],
+        [7/9, 0],
+        [8/9, 0],
+        [9/9, 0],
+    ]
+    )
+
+    tk = 32/100
     point_on_curve_at_tk = evalbsplinecurve_at_t(degree, nodes, control_points, tk)
-    random_point = np.array([4, 2])
+    a_random_point = np.array([0.5, 1.2]) # could be a data point
+    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=50)
     # plot tk on the curve
-    #visualize_point(point_on_curve_at_tk, tk)
-    #visualize_point(random_point, tk)
-    #visualize_points(curve_points)
-
+    plt.title('B-Spline Curve with a Specific Point at t=0.32 and a Random Point')
+    visualize_point(point_on_curve_at_tk, tk)
+    visualize_point(a_random_point, 222222) # second argument can be random too
+    visualize_points(curve_points)
+    """
+    
     ##############################################################################
     #                                                                            #
     #               Visualization of the curve + its derivative                  #
     #                                                                            #
     ##############################################################################  
+    
+    """
+    nodes = np.concatenate([
+    np.zeros(3),
+    np.linspace(0, 1, 8),
+    np.ones(3)
+    ])
 
+    degree = 3
+    
+    control_points = np.array(
+    [
+        [0,   0],
+        [1/9, 0],
+        [2/9, 0],
+        [3/9, 0],
+        [4/9, 1],
+        [5/9, 0],
+        [6/9, 0],
+        [7/9, 0],
+        [8/9, 0],
+        [9/9, 0],
+    ]
+    )
+
+
+    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=50)
     curve_points_prime = evalbsplinecurve_derivative(degree, nodes, control_points, sample=300)
-    point_on_curve_prime_at_tk = evalbsplinecurve_derivative_at_t(degree, nodes, control_points, tk)
-    visualize_point(point_on_curve_prime_at_tk, tk)
     visualize_two_sets_of_points(curve_points, curve_points_prime)
+    """
+
+    ##############################################################################
+    #                                                                            #
+    #               Visualization of data + curve + foot points                  #
+    #                                                                            #
+    ##############################################################################  
+
+    cloud_points = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
+
+    nodes = np.array([0,0,0,1,1,1])
+    degree = 2
+    
+    control_points = np.array(
+    [
+        [0  ,   0],
+        [0.4,   0],
+        [1.0,   0]
+    ])
+
+    initial_guess = [0.0, 0.1, 1.0]
+    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=50)
+    
+    t = []
+    for i in range(len(cloud_points)):
+        tk = newton(cloud_points[i], degree, nodes, control_points, initial_guess[i], tol=1e-6, max_iter=100)
+        t.append(tk)
+    Pt = [evalbsplinecurve_at_t(degree, nodes, control_points, tk) for tk in t]
+    #visualize_control_points(control_points)
+    visualize_data_curve_footpoints(cloud_points, curve_points, Pt)
+    

@@ -49,10 +49,11 @@ def generate_c_cloud_points(num_points, noise_level):
     return np.array(points)
 
 # Generate random points on a sinus curve
-def generate_sinus_cloud_points(num_points):
+def generate_sinus_cloud_points(num_points, noise_level):
     points = []
+    rd.seed(2025)
     for _ in range(num_points):
-        x = rd.uniform(0, 9)
-        y = np.sin(x) 
+        x = rd.uniform(0, 1)
+        y = np.sin(x*np.pi) + rd.uniform(-noise_level, noise_level)
         points.append((x, y))
     return np.array(points)

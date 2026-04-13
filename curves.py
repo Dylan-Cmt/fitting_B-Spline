@@ -16,7 +16,7 @@ def evalbspline_basis(i, degree, nodes, t):
     if degree == 0:
         if i >= n:
             return 0.0
-        return 1.0 if nodes[i] <= t < nodes[i + 1] else 0.0
+        return 1.0 if nodes[i] <= t < nodes[i + 1] or (t == nodes[-1] and nodes[i + 1] == nodes[-1]) else 0.0
     first_part = 0.0
     second_part = 0.0
     if (i + degree) < n:
@@ -104,7 +104,62 @@ def evalbsplinecurve_second_derivative_at_t(degree, nodes, control_points, t):
 
 ##############################################################################################
 ##                                                                                          ##
-##                                 foot points calculation                                  ##
+##                                 foot points approximation                                ##
+##                                                                                          ##
+##############################################################################################
+
+"""
+L'approximation plus fine de tk avec cette fonction se fera plus tard
+"""
+def foot_points_approx(bspline, bspline_derivative, Xk):
+    # Preprocessing
+
+    # Query
+
+    tk = 1
+    return tk
+
+# function to minimize for finding tk
+def F(t,Xk,degree, nodes, control_points):
+    P = evalbsplinecurve_at_t(degree, nodes, control_points, t)
+    return np.linalg.norm(P - Xk) ** 2
+
+# function for which we want to find the 0
+def F_prime(t, Xk, degree, nodes, control_points):
+    P = evalbsplinecurve_at_t(degree, nodes, control_points, t)
+    Pprime = evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t)
+    return 2 * np.dot(P - Xk, Pprime)
+
+def F_primprim(t, Xk, degree, nodes, control_points):
+    P = evalbsplinecurve_at_t(degree, nodes, control_points, t)
+    Pprime = evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t)
+    Pprimprim = evalbsplinecurve_second_derivative_at_t(degree, nodes, control_points, t)
+    return 2 * np.dot(Pprime, Pprime) + 2 * np.dot(P - Xk, Pprimprim)
+
+def newton(Xk, degree, nodes, control_points, initial_guess, tol=1e-6, max_iter=100):
+
+    tk = initial_guess
+    #t_min = nodes[degree]
+    #t_max = nodes[-degree - 1]
+    #tk = np.clip(initial_guess, t_min, t_max)  # we can clip tk to keep it in a valid range
+    for _ in range(max_iter):
+        Fp = F_prime(tk, Xk, degree, nodes, control_points)
+        Fpp = F_primprim(tk, Xk, degree, nodes, control_points)
+        if Fpp == 0:
+            break
+        step = Fp / Fpp
+        # step = np.clip(step, -0.1, 0.1) # we can also limit the step
+        tk_new = tk - step
+        # tk_new = np.clip(tk_new, t_min, t_max) 
+        if (abs(tk_new - tk) < tol) or (abs(Fp) < tol):
+            return tk_new
+        tk = tk_new
+    return tk
+
+
+##############################################################################################
+##                                                                                          ##
+##                                 other tools                                              ##
 ##                                                                                          ##
 ##############################################################################################
 
@@ -119,26 +174,13 @@ def normal_unit_vector(tangent_unit_vector):
     normal = np.array([-tangent_unit_vector[1], tangent_unit_vector[0]])
     return normal
 
-"""
-J'admets pour le moment que j'ai réussi à calculer les tk assiciés à chaque Xk.
-"""
-def foot_points(bspline, bspline_derivative, Xk):
-    # Preprocessing
-
-    # Query
-
-    tk = 1
-    return tk
-
-# Distance between Xk and P(tk)
 def d(Xk, Ptk):
     return np.linalg.norm(Xk - Ptk)
 
 
-# ex: curvature_at_tk(P'(tk) , P''(tk))
 def curvature_at_tk(Pprime, Pprimprim):
     denom = np.linalg.norm(Pprime) ** 3
     if denom == 0:
         return 0
-    return 
+    return np.linalg.norm(np.cross(Pprime, Pprimprim)) / denom
 
