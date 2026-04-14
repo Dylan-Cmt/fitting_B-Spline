@@ -152,6 +152,7 @@ if __name__ == "__main__":
     #                                                                            #
     ##############################################################################  
 
+    """
     cloud_points = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
 
     nodes = np.array([0,0,0,1,1,1])
@@ -174,4 +175,33 @@ if __name__ == "__main__":
     Pt = [evalbsplinecurve_at_t(degree, nodes, control_points, tk) for tk in t]
     #visualize_control_points(control_points)
     visualize_data_curve_footpoints(cloud_points, curve_points, Pt)
+    """
     
+
+    ##############################################################################
+    #                                                                            #
+    #                         test optimization                                  #
+    #                                                                            #
+    ##############################################################################  
+
+    cloud_points = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
+    initial_guess = [0.0, 0.1, 1.0]
+    degree = 2
+    nodes = np.array([0,0,0,1,1,1])
+    tk = 0.5
+    Pc = np.array( # points de contrôle, initial guess
+    [
+        [0  ,   0],
+        [0.4,   0],
+        [1.0,   0]
+    ])
+    i = len(Pc) # nb pts de contrôle
+
+    t = []
+    for i in range(len(cloud_points)):
+        tk = newton_tk(cloud_points[i], degree, nodes, Pc, initial_guess[i], tol=1e-6, max_iter=100)
+        t.append(tk)
+
+    B_i_d = [evalbspline_basis(i, degree, nodes, tk) for i, tk in enumerate(t)]
+
+    print(B_i_d)
