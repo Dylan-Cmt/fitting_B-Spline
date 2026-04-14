@@ -136,7 +136,7 @@ def F_primprim(t, Xk, degree, nodes, control_points):
     Pprimprim = evalbsplinecurve_second_derivative_at_t(degree, nodes, control_points, t)
     return 2 * np.dot(Pprime, Pprime) + 2 * np.dot(P - Xk, Pprimprim)
 
-def newton(Xk, degree, nodes, control_points, initial_guess, tol=1e-6, max_iter=100):
+def newton_tk(Xk, degree, nodes, control_points, initial_guess, tol=1e-6, max_iter=100):
 
     tk = initial_guess
     #t_min = nodes[degree]

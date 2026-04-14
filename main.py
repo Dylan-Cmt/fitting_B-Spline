@@ -169,7 +169,7 @@ if __name__ == "__main__":
     
     t = []
     for i in range(len(cloud_points)):
-        tk = newton(cloud_points[i], degree, nodes, control_points, initial_guess[i], tol=1e-6, max_iter=100)
+        tk = newton_tk(cloud_points[i], degree, nodes, control_points, initial_guess[i], tol=1e-6, max_iter=100)
         t.append(tk)
     Pt = [evalbsplinecurve_at_t(degree, nodes, control_points, tk) for tk in t]
     #visualize_control_points(control_points)
