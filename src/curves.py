@@ -111,7 +111,7 @@ def evalbsplinecurve_second_derivative_at_t(degree, nodes, control_points, t):
 """
 L'approximation plus fine de tk avec cette fonction se fera plus tard
 """
-def foot_points_approx(bspline, bspline_derivative, Xk):
+def foot_points_approx(P):
     # Preprocessing
 
     # Query

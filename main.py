@@ -1,6 +1,7 @@
-from cloud_points import *
-from curves import *
-from visualizers import *
+from src.cloud_points import *
+from src.curves import *
+from src.visualizers import *
+from src.optimizers import *
 
 if __name__ == "__main__":
     
@@ -184,6 +185,7 @@ if __name__ == "__main__":
     #                                                                            #
     ##############################################################################  
 
+    """
     cloud_points = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
     initial_guess = [0.0, 0.1, 1.0]
     degree = 2
@@ -201,7 +203,29 @@ if __name__ == "__main__":
     for i in range(len(cloud_points)):
         tk = newton_tk(cloud_points[i], degree, nodes, Pc, initial_guess[i], tol=1e-6, max_iter=100)
         t.append(tk)
+    """
 
-    B_i_d = [evalbspline_basis(i, degree, nodes, tk) for i, tk in enumerate(t)]
+    ##############################################################################
+    #                                                                            #
+    #                                test                                        #
+    #                                                                            #
+    ##############################################################################  
 
-    print(B_i_d)
+    cloud_points = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
+    initial_guess = [0.0, 0.1, 1.0]
+    degree = 2
+    nodes = np.array([0,0,0,1,1,1])
+    tk = 0.5
+    Pc = np.array( # points de contrôle, initial guess
+    [
+        [0  ,   0],
+        [0.4,   0],
+        [1.0,   0]
+    ])
+
+    t_min = nodes[degree]
+    t_max = nodes[-degree - 1]
+    t_vals = np.linspace(t_min, t_max, 500)
+
+    curve_points = [ curve(Pc,t) for t in t_vals]
+    visualize_two_sets_of_points(curve_points, cloud_points)
