@@ -2,6 +2,7 @@ from src.cloud_points import *
 from src.curves import *
 from src.visualizers import *
 from src.optimizers import *
+from src.bezier_optimizer import *
 
 if __name__ == "__main__":
     
@@ -32,7 +33,7 @@ if __name__ == "__main__":
     # circle or square or c or sinus
     cloud_points = generate_sinus_cloud_points(num_points, noise_level)
 
-    nodes = np.concatenate([
+    knots = np.concatenate([
     np.zeros(3),
     np.linspace(0, 1, 8),
     np.ones(3)
@@ -60,7 +61,7 @@ if __name__ == "__main__":
     )
     
 
-    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=50)
+    curve_points = evalbsplinecurve(degree, knots, control_points, sample=50)
 
     plt.title('Sinus Shaped Cloud Points without Noise and Initial B-Spline Curve')
     visualize_two_sets_of_points(cloud_points, curve_points)
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     # circle or square or c or sinus
     cloud_points = generate_sinus_cloud_points(num_points, noise_level)
 
-    nodes = np.concatenate([
+    knots = np.concatenate([
     np.zeros(3),
     np.linspace(0, 1, 8),
     np.ones(3)
@@ -101,9 +102,9 @@ if __name__ == "__main__":
     )
 
     tk = 32/100
-    point_on_curve_at_tk = evalbsplinecurve_at_t(degree, nodes, control_points, tk)
+    point_on_curve_at_tk = evalbsplinecurve_at_t(degree, knots, control_points, tk)
     a_random_point = np.array([0.5, 1.2]) # could be a data point
-    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=50)
+    curve_points = evalbsplinecurve(degree, knots, control_points, sample=50)
     # plot tk on the curve
     plt.title('B-Spline Curve with a Specific Point at t=0.32 and a Random Point')
     visualize_point(point_on_curve_at_tk, tk)
@@ -118,7 +119,7 @@ if __name__ == "__main__":
     ##############################################################################  
     
     """
-    nodes = np.concatenate([
+    knots = np.concatenate([
     np.zeros(3),
     np.linspace(0, 1, 8),
     np.ones(3)
@@ -142,8 +143,8 @@ if __name__ == "__main__":
     )
 
 
-    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=50)
-    curve_points_prime = evalbsplinecurve_derivative(degree, nodes, control_points, sample=300)
+    curve_points = evalbsplinecurve(degree, knots, control_points, sample=50)
+    curve_points_prime = evalbsplinecurve_derivative(degree, knots, control_points, sample=300)
     visualize_two_sets_of_points(curve_points, curve_points_prime)
     """
 
@@ -156,7 +157,7 @@ if __name__ == "__main__":
     """
     cloud_points = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
 
-    nodes = np.array([0,0,0,1,1,1])
+    knots = np.array([0,0,0,1,1,1])
     degree = 2
     
     control_points = np.array(
@@ -167,13 +168,13 @@ if __name__ == "__main__":
     ])
 
     initial_guess = [0.0, 0.1, 1.0]
-    curve_points = evalbsplinecurve(degree, nodes, control_points, sample=50)
+    curve_points = evalbsplinecurve(degree, knots, control_points, sample=50)
     
     t = []
     for i in range(len(cloud_points)):
-        tk = newton_tk(cloud_points[i], degree, nodes, control_points, initial_guess[i], tol=1e-6, max_iter=100)
+        tk = newton_tk(cloud_points[i], degree, knots, control_points, initial_guess[i], tol=1e-6, max_iter=100)
         t.append(tk)
-    Pt = [evalbsplinecurve_at_t(degree, nodes, control_points, tk) for tk in t]
+    Pt = [evalbsplinecurve_at_t(degree, knots, control_points, tk) for tk in t]
     #visualize_control_points(control_points)
     visualize_data_curve_footpoints(cloud_points, curve_points, Pt)
     """
@@ -189,7 +190,7 @@ if __name__ == "__main__":
     cloud_points = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
     initial_guess = [0.0, 0.1, 1.0]
     degree = 2
-    nodes = np.array([0,0,0,1,1,1])
+    knots = np.array([0,0,0,1,1,1])
     tk = 0.5
     Pc = np.array( # points de contrôle, initial guess
     [
@@ -201,7 +202,7 @@ if __name__ == "__main__":
 
     t = []
     for i in range(len(cloud_points)):
-        tk = newton_tk(cloud_points[i], degree, nodes, Pc, initial_guess[i], tol=1e-6, max_iter=100)
+        tk = newton_tk(cloud_points[i], degree, knots, Pc, initial_guess[i], tol=1e-6, max_iter=100)
         t.append(tk)
     """
 
@@ -214,7 +215,7 @@ if __name__ == "__main__":
     cloud_points = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
     initial_guess = [0.0, 0.1, 1.0]
     degree = 2
-    nodes = np.array([0,0,0,1,1,1])
+    knots = np.array([0,0,0,1,1,1])
     tk = 0.5
     Pc = np.array( # points de contrôle, initial guess
     [
@@ -223,9 +224,9 @@ if __name__ == "__main__":
         [1.0,   0]
     ])
 
-    t_min = nodes[degree]
-    t_max = nodes[-degree - 1]
+    t_min = knots[degree]
+    t_max = knots[-degree - 1]
     t_vals = np.linspace(t_min, t_max, 500)
 
     curve_points = [ curve(Pc,t) for t in t_vals]
-    visualize_two_sets_of_points(curve_points, cloud_points)
+    visualize_two_sets_of_points(cloud_points, curve_points)
