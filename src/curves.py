@@ -5,65 +5,65 @@ import numpy as np
 ##                                 B-Spline and its derivatives                             ##
 ##                                                                                          ##
 ##############################################################################################
-def evalbspline_basis(i, degree, nodes, t):
-    n = len(nodes) - 1
+def evalbspline_basis(i, degree, knots, t):
+    n = len(knots) - 1
     if degree < 0:
         raise ValueError(f"Degree cannot be negative. Received: {degree}")
     if i < 0 or i >= n:
         raise ValueError(
-            f"Index i ({i}) is out of bounds for knot VectorN of length {len(nodes)}"
+            f"Index i ({i}) is out of bounds for knot VectorN of length {len(knots)}"
         )
     if degree == 0:
         if i >= n:
             return 0.0
-        return 1.0 if nodes[i] <= t < nodes[i + 1] or (t == nodes[-1] and nodes[i + 1] == nodes[-1]) else 0.0
+        return 1.0 if knots[i] <= t < knots[i + 1] or (t == knots[-1] and knots[i + 1] == knots[-1]) else 0.0
     first_part = 0.0
     second_part = 0.0
     if (i + degree) < n:
-        denom1 = nodes[i + degree] - nodes[i]
+        denom1 = knots[i + degree] - knots[i]
         if denom1 != 0:
-            first_part = (t - nodes[i]) / denom1 * evalbspline_basis(i, degree - 1, nodes, t)
+            first_part = (t - knots[i]) / denom1 * evalbspline_basis(i, degree - 1, knots, t)
     if (i + degree + 1) < n:
-        denom2 = nodes[i + degree + 1] - nodes[i + 1]
+        denom2 = knots[i + degree + 1] - knots[i + 1]
         if denom2 != 0:
             second_part = (
-                (nodes[i + degree + 1] - t)
+                (knots[i + degree + 1] - t)
                 / denom2
-                * evalbspline_basis(i + 1, degree - 1, nodes, t)
+                * evalbspline_basis(i + 1, degree - 1, knots, t)
             )
     return first_part + second_part
 
-def evalbsplinecurve_at_t(degree, nodes, control_points, t):
-    t_min = nodes[degree]
-    t_max = nodes[-degree - 1]
+def evalbsplinecurve_at_t(degree, knots, control_points, t):
+    t_min = knots[degree]
+    t_max = knots[-degree - 1]
     if t < t_min or t > t_max:
         raise ValueError(f"Parameter t ({t}) is out of bounds for knot vector with degree {degree}")
     curve_at_t = np.zeros(control_points.shape[1])
     for i in range(len(control_points)):
-        N = evalbspline_basis(i, degree, nodes, t)
+        N = evalbspline_basis(i, degree, knots, t)
         curve_at_t += N * control_points[i]
     return curve_at_t
 
-def evalbsplinecurve(degree, nodes, control_points, sample=300):
-    t_min = nodes[degree]
-    t_max = nodes[-degree - 1]
+def evalbsplinecurve(degree, knots, control_points, sample=300):
+    t_min = knots[degree]
+    t_max = knots[-degree - 1]
     t_vals = np.linspace(t_min, t_max, sample)
     curve = np.zeros((sample, control_points.shape[1]))
 
     for idx, t in enumerate(t_vals):
-        curve_at_t = evalbsplinecurve_at_t(degree, nodes, control_points, t)
+        curve_at_t = evalbsplinecurve_at_t(degree, knots, control_points, t)
         curve[idx] = curve_at_t 
     return curve
 
 
-def hodograph(degree, nodes, control_points):
+def hodograph(degree, knots, control_points):
     n_ctrl = len(control_points)
     dim = control_points.shape[1]
 
     hodograph_points = np.zeros((n_ctrl - 1, dim))
 
     for i in range(n_ctrl - 1):
-        denom = nodes[i + degree + 1] - nodes[i + 1]
+        denom = knots[i + degree + 1] - knots[i + 1]
         if denom == 0:
             hodograph_points[i] = 0
         else:
@@ -71,36 +71,36 @@ def hodograph(degree, nodes, control_points):
 
     return hodograph_points
 
-def evalbsplinecurve_derivative(degree, nodes, control_points, sample=300):
+def evalbsplinecurve_derivative(degree, knots, control_points, sample=300):
     if degree < 0:
         raise ValueError(f"Degree cannot be negative. Received: {degree}")
     if degree == 0:
         return np.zeros(control_points.shape[1])
     else:
-        new_control_points = hodograph(degree, nodes, control_points)
+        new_control_points = hodograph(degree, knots, control_points)
         new_degree = degree - 1
-        new_nodes = nodes[1:-1]
+        new_knots = knots[1:-1]
 
-    return evalbsplinecurve(new_degree, new_nodes, new_control_points, sample)
+    return evalbsplinecurve(new_degree, new_knots, new_control_points, sample)
 
-def evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t):
+def evalbsplinecurve_derivative_at_t(degree, knots, control_points, t):
     if degree == 0:
         return np.zeros(control_points.shape[1])
-    return evalbsplinecurve_at_t(degree - 1, nodes[1:-1], hodograph(degree, nodes, control_points), t)
+    return evalbsplinecurve_at_t(degree - 1, knots[1:-1], hodograph(degree, knots, control_points), t)
 
-def evalbsplinecurve_second_derivative(degree, nodes, control_points, sample=300):
+def evalbsplinecurve_second_derivative(degree, knots, control_points, sample=300):
     if degree < 2:
         return np.zeros(control_points.shape[1])
-    first_derivative_control_points = hodograph(degree, nodes, control_points)
-    second_derivative_control_points = hodograph(degree - 1, nodes[1:-1], first_derivative_control_points)
-    return evalbsplinecurve(degree - 2, nodes[2:-2], second_derivative_control_points, sample)
+    first_derivative_control_points = hodograph(degree, knots, control_points)
+    second_derivative_control_points = hodograph(degree - 1, knots[1:-1], first_derivative_control_points)
+    return evalbsplinecurve(degree - 2, knots[2:-2], second_derivative_control_points, sample)
 
-def evalbsplinecurve_second_derivative_at_t(degree, nodes, control_points, t):
+def evalbsplinecurve_second_derivative_at_t(degree, knots, control_points, t):
     if degree < 2:
         return np.zeros(control_points.shape[1])
-    first_derivative_control_points = hodograph(degree, nodes, control_points)
-    second_derivative_control_points = hodograph(degree - 1, nodes[1:-1], first_derivative_control_points)
-    return evalbsplinecurve_at_t(degree - 2, nodes[2:-2], second_derivative_control_points, t)
+    first_derivative_control_points = hodograph(degree, knots, control_points)
+    second_derivative_control_points = hodograph(degree - 1, knots[1:-1], first_derivative_control_points)
+    return evalbsplinecurve_at_t(degree - 2, knots[2:-2], second_derivative_control_points, t)
 
 ##############################################################################################
 ##                                                                                          ##
@@ -120,31 +120,31 @@ def foot_points_approx(P):
     return tk
 
 # function to minimize for finding tk
-def F(t,Xk,degree, nodes, control_points):
-    P = evalbsplinecurve_at_t(degree, nodes, control_points, t)
+def F(t,Xk,degree, knots, control_points):
+    P = evalbsplinecurve_at_t(degree, knots, control_points, t)
     return np.linalg.norm(P - Xk) ** 2
 
 # function for which we want to find the 0
-def F_prime(t, Xk, degree, nodes, control_points):
-    P = evalbsplinecurve_at_t(degree, nodes, control_points, t)
-    Pprime = evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t)
+def F_prime(t, Xk, degree, knots, control_points):
+    P = evalbsplinecurve_at_t(degree, knots, control_points, t)
+    Pprime = evalbsplinecurve_derivative_at_t(degree, knots, control_points, t)
     return 2 * np.dot(P - Xk, Pprime)
 
-def F_primprim(t, Xk, degree, nodes, control_points):
-    P = evalbsplinecurve_at_t(degree, nodes, control_points, t)
-    Pprime = evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t)
-    Pprimprim = evalbsplinecurve_second_derivative_at_t(degree, nodes, control_points, t)
+def F_primprim(t, Xk, degree, knots, control_points):
+    P = evalbsplinecurve_at_t(degree, knots, control_points, t)
+    Pprime = evalbsplinecurve_derivative_at_t(degree, knots, control_points, t)
+    Pprimprim = evalbsplinecurve_second_derivative_at_t(degree, knots, control_points, t)
     return 2 * np.dot(Pprime, Pprime) + 2 * np.dot(P - Xk, Pprimprim)
 
-def newton_tk(Xk, degree, nodes, control_points, initial_guess, tol=1e-6, max_iter=100):
+def newton_tk(Xk, degree, knots, control_points, initial_guess, tol=1e-6, max_iter=100):
 
     tk = initial_guess
-    #t_min = nodes[degree]
-    #t_max = nodes[-degree - 1]
+    #t_min = knots[degree]
+    #t_max = knots[-degree - 1]
     #tk = np.clip(initial_guess, t_min, t_max)  # we can clip tk to keep it in a valid range
     for _ in range(max_iter):
-        Fp = F_prime(tk, Xk, degree, nodes, control_points)
-        Fpp = F_primprim(tk, Xk, degree, nodes, control_points)
+        Fp = F_prime(tk, Xk, degree, knots, control_points)
+        Fpp = F_primprim(tk, Xk, degree, knots, control_points)
         if Fpp == 0:
             break
         step = Fp / Fpp
@@ -163,8 +163,8 @@ def newton_tk(Xk, degree, nodes, control_points, initial_guess, tol=1e-6, max_it
 ##                                                                                          ##
 ##############################################################################################
 
-def tangent_unit_vector(degree, nodes, control_points, t):
-    d1 = evalbsplinecurve_derivative_at_t(degree, nodes, control_points, t)
+def tangent_unit_vector(degree, knots, control_points, t):
+    d1 = evalbsplinecurve_derivative_at_t(degree, knots, control_points, t)
     norm_d1 = np.linalg.norm(d1)
     if norm_d1 == 0:
         return np.zeros_like(d1)
