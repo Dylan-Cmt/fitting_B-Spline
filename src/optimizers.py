@@ -1,40 +1,22 @@
 import numpy as np
-import src.curves as crv
-
-##############################################################################################
-##                                                                                          ##
-##                                 gradient descent                                         ##
-##                                                                                          ##
-##############################################################################################
-
-# variables définis dans le main
-degree = 2
-nodes = np.array([0,0,0,1,1,1])
-X = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
-Pc = np.array( # points de contrôle, initial guess
-    [
-        [0  ,   0],
-        [0.4,   0],
-        [1.0,   0]
-    ])
 
 def bspline_basis(i, degree, t):
-    n = len(nodes) - 1
+    n = len(knots) - 1
     if degree == 0:
         if i >= n:
             return 0.0
-        return 1.0 if nodes[i] <= t < nodes[i + 1] or (t == nodes[-1] and nodes[i + 1] == nodes[-1]) else 0.0
+        return 1.0 if knots[i] <= t < knots[i + 1] or (t == knots[-1] and knots[i + 1] == knots[-1]) else 0.0
     first_part = 0.0
     second_part = 0.0
     if (i + degree) < n:
-        denom1 = nodes[i + degree] - nodes[i]
+        denom1 = knots[i + degree] - knots[i]
         if denom1 != 0:
-            first_part = (t - nodes[i]) / denom1 * bspline_basis(i, degree - 1, t)
+            first_part = (t - knots[i]) / denom1 * bspline_basis(i, degree - 1, t)
     if (i + degree + 1) < n:
-        denom2 = nodes[i + degree + 1] - nodes[i + 1]
+        denom2 = knots[i + degree + 1] - knots[i + 1]
         if denom2 != 0:
             second_part = (
-                (nodes[i + degree + 1] - t)
+                (knots[i + degree + 1] - t)
                 / denom2
                 * bspline_basis(i + 1, degree - 1, t)
             )
@@ -42,10 +24,10 @@ def bspline_basis(i, degree, t):
  
 def dt_bspline_basis(i, degree, t): # cf p59 du NURBS BOOK
     first_part, second_part = 0.0, 0.0
-    denom1 = nodes[i + degree] - nodes[i]
+    denom1 = knots[i + degree] - knots[i]
     if denom1 != 0:
         first_part  = degree / denom1 * bspline_basis(i, degree - 1, t)
-    denom2 = nodes[i + degree + 1] - nodes[i + 1]
+    denom2 = knots[i + degree + 1] - knots[i + 1]
     if denom2 != 0:
         second_part = degree / denom2 * bspline_basis(i + 1, degree - 1, t)
     return first_part - second_part
@@ -54,13 +36,13 @@ def dtt_bspline_basis(i, degree, t): # cf p62 du NURBS BOOK
     first_part, second_part, third_part = 0.0, 0.0, 0.0
 
     # N_{i, p-2}
-    denom1 = (nodes[i + degree] - nodes[i]) * (nodes[i + degree - 1] - nodes[i])
+    denom1 = (knots[i + degree] - knots[i]) * (knots[i + degree - 1] - knots[i])
     if denom1 != 0:
         first_part = degree * (degree - 1) / denom1 * bspline_basis(i, degree - 2, t)
 
     # N_{i+1, p-2}
-    denom2a = (nodes[i + degree] - nodes[i]) * (nodes[i + degree] - nodes[i + 1])
-    denom2b = (nodes[i + degree + 1] - nodes[i + 1]) * (nodes[i + degree] - nodes[i + 1])
+    denom2a = (knots[i + degree] - knots[i]) * (knots[i + degree] - knots[i + 1])
+    denom2b = (knots[i + degree + 1] - knots[i + 1]) * (knots[i + degree] - knots[i + 1])
 
     coeff2 = 0.0
     if denom2a != 0:
@@ -71,7 +53,7 @@ def dtt_bspline_basis(i, degree, t): # cf p62 du NURBS BOOK
     second_part = degree * (degree - 1) * coeff2 * bspline_basis(i + 1, degree - 2, t)
 
     # N_{i+2, p-2}
-    denom3 = (nodes[i + degree + 1] - nodes[i + 1]) * (nodes[i + degree + 1] - nodes[i + 2])
+    denom3 = (knots[i + degree + 1] - knots[i + 1]) * (knots[i + degree + 1] - knots[i + 2])
     if denom3 != 0:
         third_part = degree * (degree - 1) / denom3 * bspline_basis(i + 2, degree - 2, t)
 
@@ -79,8 +61,8 @@ def dtt_bspline_basis(i, degree, t): # cf p62 du NURBS BOOK
 
  
 def curve(P, t):
-    t_min = nodes[degree]
-    t_max = nodes[-degree - 1]
+    t_min = knots[degree]
+    t_max = knots[-degree - 1]
     curve = np.zeros(P.shape[1])
     for i in range(len(P)):
         N = bspline_basis(i, degree, t)
@@ -88,8 +70,8 @@ def curve(P, t):
     return curve
  
 def dt_curve(P, t):
-    t_min = nodes[degree]
-    t_max = nodes[-degree - 1]
+    t_min = knots[degree]
+    t_max = knots[-degree - 1]
     curve = np.zeros(P.shape[1])
     for i in range(len(P)):
         N = dt_bspline_basis(i, degree, t)
@@ -97,8 +79,8 @@ def dt_curve(P, t):
     return curve
 
 def dtt_curve(P, t):
-    t_min = nodes[degree]
-    t_max = nodes[-degree - 1]
+    t_min = knots[degree]
+    t_max = knots[-degree - 1]
     curve = np.zeros(P.shape[1])
     for i in range(len(P)):
         N = dtt_bspline_basis(i, degree, t)
@@ -124,8 +106,8 @@ def F_primprim(control_points, t, Xk):
 
 def newton_tk(Xk, control_points, initial_guess, tol=1e-6, max_iter=100):
     tk = initial_guess
-    #t_min = nodes[degree]
-    #t_max = nodes[-degree - 1]
+    #t_min = knots[degree]
+    #t_max = knots[-degree - 1]
     #tk = np.clip(initial_guess, t_min, t_max)  # we can clip tk to keep it in a valid range
     for _ in range(max_iter):
         Fp = F_prime(control_points, tk, Xk)
@@ -167,8 +149,9 @@ def dP_f(P, T):
             grad_P[i] += d * B_ik
     return grad_P
 
-# alpha dans R
-# phi(alpha, P, T) = f(P - alpha * dP_f(P, T), T)
+def phi(alpha, P, T):
+    D = -dP_f(P, T)
+    return f(P + alpha * D, T)
 
 def d_phi(alpha, P, T):
     D    = -dP_f(P, T)
@@ -189,25 +172,52 @@ def dd_phi(alpha, P, T):
         ddphi += np.dot(d_k, d_k)
     return ddphi
 
-def newton_alpha(f, grad_f, P, T, alpha0, tol=1e-6, max_iter=1000):
+
+def newton_alpha(f, grad_f, P, T, alpha0, tol=1e-6, max_iter=1000): # changer f et grad_f pour d_phi et dd_phi
     alpha = alpha0
     for _ in range(max_iter):
-        if abs(grad_f(alpha)) < tol:
+        if np.linalg.norm(grad_f(alpha, P, T)) < tol:
             break
         alpha = alpha - f(alpha, P, T) / grad_f(alpha, P, T)
     return alpha
 
 
-"""
-def gradient_descent(x_0, f, df, max_iter=1000, tol=1e-6):
+
+def gradient_descent(x_0, f, df, alpha0, T, max_iter=1000, tol=1e-6):
     x = x_0
+    alpha = alpha0
     for i in range(max_iter): 
-        fx = f(x)
-        dfx = df(x)
-        alpha = newton_alpha(f, grad_f, x, tol)
+        fx = f(alpha0, x, T)
+        dfx = df(alpha0, x, T)
+        alpha = newton_alpha(f, df, x, T, alpha0, tol)
         dx = - alpha * dfx
+        alpha0 = alpha
         if np.linalg.norm(dx) < tol:
             break
         x += dx
     return x
-"""
+
+
+# variables définis dans le main
+degree = 2
+knots = np.array([0,0,0,1,1,1])
+X = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
+Pc = np.array( # points de contrôle, initial guess
+    [
+        [0  ,   0],
+        [0.4,   0],
+        [1.0,   0]
+    ])
+
+initial_guess = 0.1
+tkk = newton_tk(X[1], Pc, initial_guess, tol=1e-6, max_iter=1000)
+T = [0.0, tkk, 1.0]
+
+#alphaa = newton_alpha(d_phi, dd_phi, Pc, T, alpha0=0.1, tol=1e-6, max_iter=1000)
+#alpha0 = 0.1
+
+#print(tkk)
+#print(alphaa)
+
+#P_plus = gradient_descent(Pc, phi, d_phi, alpha0, T, max_iter=1000, tol=1e-6)
+#print(P_plus)
