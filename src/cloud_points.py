@@ -17,19 +17,19 @@ def generate_square_cloud_points(num_points, noise_level):
     points = []
     for _ in range(num_points):
         # Randomly choose an edge (0: bottom, 1: right, 2: top, 3: left)
-        edge = rd.randint(0, 3)
+        edge = rd.randint(1, 3) # [0,3] for entire square, [1,3] for only 3 edges (no bottom edge)
         if edge == 0:  # Bottom edge
-            x = rd.uniform(-1, 1) + rd.uniform(-noise_level, noise_level)
-            y = -1 + rd.uniform(-noise_level, noise_level)
+            x = rd.uniform(0, 1) + rd.uniform(-noise_level, noise_level)
+            y = rd.uniform(-noise_level, noise_level)
         elif edge == 1:  # Right edge
             x = 1 + rd.uniform(-noise_level, noise_level)
-            y = rd.uniform(-1, 1) + rd.uniform(-noise_level, noise_level)
+            y = rd.uniform(0, 1) + rd.uniform(-noise_level, noise_level)
         elif edge == 2:  # Top edge
-            x = rd.uniform(-1, 1) + rd.uniform(-noise_level, noise_level)
+            x = rd.uniform(0, 1) + rd.uniform(-noise_level, noise_level)
             y = 1 + rd.uniform(-noise_level, noise_level)
         else:  # Left edge
-            x = -1 + rd.uniform(-noise_level, noise_level)
-            y = rd.uniform(-1, 1) + rd.uniform(-noise_level, noise_level)
+            x = rd.uniform(-noise_level, noise_level)
+            y = rd.uniform(0, 1) + rd.uniform(-noise_level, noise_level)
         points.append((x, y))
     return points
 
