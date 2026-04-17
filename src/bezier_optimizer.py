@@ -93,14 +93,14 @@ def all_tk(X, control_points, initial_guesses=None):
         initial_guesses = np.linspace(0.0, 1.0, len(X))
     return [newton_tk(Xk, control_points, guess) for Xk, guess in zip(X, initial_guesses)]
 
-"""
+
 def f(P, T, X):
     total = 0.0
     for tk, Xk in zip(T, X):
         diff = eval_bezier_curve(P, tk) - Xk
         total += np.dot(diff, diff)
     return 0.5 * total
-"""
+
 
 def dP_f(P, T, X):
     P = np.asarray(P, dtype=float)
@@ -149,22 +149,29 @@ def newton_alpha(d_phi_func, dd_phi_func, P, T, X, alpha0, tol=1e-6, max_iter=10
         alpha = alpha - grad / denom
     return alpha
 
+def avg_error(P, T, X):
+    return np.sqrt(2 * f(P, T, X) / len(X))
 
 def gradient_descent(P0, T, X, alpha0=0.1, max_iter=100, tol=1e-6):
     P = np.asarray(P0, dtype=float).copy()
-    for _ in range(max_iter):
+    avg_error = []
+    iter = []
+    for i in range(max_iter):
+        iter.append(i)
+        avg_error.append(avg_error(P, T, X))
         grad_P = dP_f(P, T, X)
         norm_grad = np.linalg.norm(grad_P)
         if norm_grad < tol:
+            print(f"Convergence achieved after {i} iterations")
             break
         D = -grad_P
         alpha = newton_alpha(d_phi, dd_phi, P, T, X, alpha0, tol)
         if alpha <= 0 or np.isnan(alpha):
             alpha = alpha0
         P += alpha * D
-    return P
+    return P, iter, avg_error
 
-
+"""
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from visualizers import visualize_data_curve_footpoints
@@ -186,3 +193,4 @@ if __name__ == "__main__":
     plt.title("Bezier curve after gradient descent optimization")
     visualize_data_curve_footpoints(X, optimized_curve, optimized_projections)
     plt.show()
+ """       
