@@ -40,14 +40,23 @@ def visualize_data_curve_footpoints_controlpoints(cloud, curve, foot_points, con
     x2, y2 = zip(*curve)
     x3, y3 = zip(*foot_points)
     x4, y4 = zip(*control_points)
-    plt.scatter(x1, y1, color='black', alpha=0.5, s=5, label='Cloud Points')
+    plt.scatter(x1, y1, color='green', alpha=0.5, s=30, label='Cloud Points')
     plt.plot(x2, y2, color='red', linewidth=1, label='Curve')
-    plt.scatter(x3, y3, color='blue', alpha=0.5, s=30, label='Foot Points')
-    plt.scatter(x4, y4, color='green', s=50, marker='x', label='Control Points')
+    plt.scatter(x3, y3, color='blue', alpha=0.5, s=10, label='Foot Points')
+    plt.scatter(x4, y4, color='black', s=50, marker='x', label='Control Points')
     # title is set in main.py
     plt.xlabel('X-axis')
     plt.ylabel('Y-axis')
     plt.axis('equal')  # Set equal aspect ratio
     plt.grid()
     plt.legend()
+    plt.show()
+
+def visualize_error_convergence(iter, avg_error):
+    plt.plot(iter, avg_error, 'o-')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlabel('Log10(Iteration)')
+    plt.ylabel('Log10(Average Error)')
+    plt.title('Convergence of Gradient Descent')
     plt.show()
