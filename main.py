@@ -1,8 +1,8 @@
+from src.bspline_curves import *
+from src.bspline_optimizers import *
 from src.cloud_points import *
-from src.curves import *
 from src.visualizers import *
-from src.optimizers import *
-from src.bezier_optimizer import *
+import time
 
 if __name__ == "__main__":
     
@@ -212,27 +212,28 @@ if __name__ == "__main__":
     #                                                                            #
     ##############################################################################  
 
-
+    """
     X = np.array([[0.0, 0.0], [0.5, 0.5], [1.0, 0.0]])
     control_points = np.array([[0.0, 0.0], [0.4, 0.0], [1.0, 0.0]])
     tk_initial_guess = [0.0, 0.1, 1.0]
+    """
     """
     X = np.array([[0.0, 0.0], [0.4, 0.6], [0.6, 0.4], [1.0, 0.0]])
     control_points = np.array([[0.0, 0.0], [0.4, 0.0], [0.5, 0.0], [1.0, 0.0]])
     initial_guess = [0.0, 0.1, 0.3, 1.0]
     """
-    
+    """
     unoptimized_curve = eval_bezier_curve(control_points, np.linspace(0.0, 1.0, 50))
 
     plt.title("Initial Bézier curve and foot points before optimization")
     visualize_control_points(control_points)
-    visualize_data_curve_footpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in tk_initial_guess])
+    visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in tk_initial_guess], control_points)
 
     T = all_tk(X, control_points, initial_guesses=tk_initial_guess)
 
     plt.title("Bezier curve with foot points before optimization")
     visualize_control_points(control_points)
-    visualize_data_curve_footpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in T])
+    visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in T], control_points)
 
 
     optimized_control_points = gradient_descent(control_points, T, X)
@@ -241,4 +242,5 @@ if __name__ == "__main__":
 
     plt.title("Bezier curve after gradient descent optimization")
     visualize_control_points(optimized_control_points)
-    visualize_data_curve_footpoints(X, optimized_curve, footpoints_of_Pc)
+    visualize_data_curve_footpoints_controlpoints(X, optimized_curve, footpoints_of_Pc, optimized_control_points)
+    """
