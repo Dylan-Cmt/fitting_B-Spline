@@ -52,10 +52,8 @@ def visualize_data_curve_footpoints_controlpoints(cloud, curve, foot_points, con
     plt.legend()
     plt.show()
 
-def visualize_error_convergence(iter, avg_error):
-    plt.plot(iter, avg_error, 'o-')
-    plt.xscale('log')
-    plt.yscale('log')
+def visualize_error_convergence(nb_iter, avg_error):
+    plt.plot(nb_iter, avg_error, 'o-')
     plt.xlabel('Log10(Iteration)')
     plt.ylabel('Log10(Average Error)')
     plt.title('Convergence of Gradient Descent')
