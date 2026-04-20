@@ -1,137 +1,139 @@
 import numpy as np
 from . import bspline_curves as cv
 
+"""
 # function to minimize for finding tk
 def F(control_points, t, Xk):
     P = cv.bspline_curve(control_points, t)
     return np.linalg.norm(P - Xk) ** 2
+"""
+
 
 # function for which we want to find the 0
-def F_prime(control_points,t, Xk):
-    P = cv.bspline_curve(control_points, t)
-    Pprime = cv.dt_bspline_curve(control_points, t)
+def F_prime(t, Xk, control_points, knots, degree):
+    P = cv.bspline_curve(control_points, t, knots, degree)
+    Pprime = cv.dt_bspline_curve(control_points, t, knots, degree)
     return 2 * np.dot(P - Xk, Pprime)
 
-def F_primprim(control_points, t, Xk):
-    P = cv.bspline_curve(control_points, t)
-    Pprime = cv.dt_bspline_curve(control_points, t)
-    Pprimprim = cv.dtt_bspline_curve(control_points, t)
+
+def F_primprim(t, Xk, control_points, knots, degree):
+    P = cv.bspline_curve(control_points, t, knots, degree)
+    Pprime = cv.dt_bspline_curve(control_points, t, knots, degree)
+    Pprimprim = cv.dtt_bspline_curve(control_points, t, knots, degree)
     return 2 * np.dot(Pprime, Pprime) + 2 * np.dot(P - Xk, Pprimprim)
 
-def newton_tk(Xk, control_points, initial_guess, tol=1e-6, max_iter=100):
-    tk = initial_guess
-    #t_min = knots[degree]
-    #t_max = knots[-degree - 1]
-    #tk = np.clip(initial_guess, t_min, t_max)  # we can clip tk to keep it in a valid range
+
+def newton_tk(Xk, control_points, knots, degree, initial_guess, tol=1e-6, max_iter=100):
+    t = np.clip(initial_guess, 0.0, 1.0) # keep tk in [0;1]
     for _ in range(max_iter):
-        Fp = F_prime(control_points, tk, Xk)
-        Fpp = F_primprim(control_points, tk, Xk)
+        Fp = F_prime(t, Xk, control_points, knots, degree)
+        Fpp = F_primprim(t, Xk, control_points, knots, degree)
         if Fpp == 0:
             break
-        step = Fp / Fpp
-        # step = np.clip(step, -0.1, 0.1) # we can also limit the step
-        tk_new = tk - step
-        # tk_new = np.clip(tk_new, t_min, t_max) 
-        if (abs(tk_new - tk) < tol) or (abs(Fp) < tol):
-            return tk_new
-        tk = tk_new
-    return tk
+        t_new = t - Fp / Fpp
+        t_new = np.clip(t_new, 0.0, 1.0)
+        if abs(t_new - t) < tol:
+            return t_new
+        t = t_new
+    return t
+
+def all_tk(X, control_points, knots, degree, initial_guesses=None):
+    X = np.asarray(X, dtype=float)
+    if initial_guesses is None:
+        initial_guesses = np.linspace(0.0, 1.0, len(X))
+    return [newton_tk(Xk, control_points, knots, degree, guess) for Xk, guess in zip(X, initial_guesses)]
+
+
 
 # objective function
-def f(P, T):
+def f(P, T, knots, degree, X):
     tot = 0.0
     for k in range(len(T)):
-        tot += np.linalg.norm((cv.bspline_curve(P, T[k]) - X[k])) ** 2
+        tot += np.linalg.norm((cv.bspline_curve(P, T[k], knots, degree) - X[k])) ** 2
     return 0.5 * tot
- 
-def dt_f(P, T):
+
+
+def dt_f(P, T, knots, degree, X):
     n = len(T)
     grad_t = np.zeros(n)
     for k in range(n):   
-        grad_t[k] = np.dot(cv.bspline_curve(P, T[k]) - X[k], cv.dt_bspline_curve(P, T[k]))
+        grad_t[k] = np.dot(cv.bspline_curve(P, T[k], knots, degree) - X[k], cv.dt_bspline_curve(P, T[k], knots, degree))
     return grad_t
 
-def dP_f(P, T):
+
+def dP_f(P, T, knots, degree, X):
     m = P.shape[0]
     n = len(T)
     grad_P = np.zeros_like(P)
 
     for k in range(n):
-        d = cv.bspline_curve(P, T[k]) - X[k]
+        d = cv.bspline_curve(P, T[k], knots, degree) - X[k]
         for i in range(m):
-            B_ik = cv.bspline_basis(i, degree, T[k])
+            B_ik = cv.bspline_basis(i, degree, T[k], knots)
             grad_P[i] += d * B_ik
     return grad_P
 
-def phi(alpha, P, T):
-    D = -dP_f(P, T)
-    return f(P + alpha * D, T)
 
-def d_phi(alpha, P, T):
-    D    = -dP_f(P, T)
+"""
+def phi(alpha, P, T, X):
+    D = -dP_f(P, T, knots, degree, X)
+    return f(P + alpha * D, T, knots, degree)
+"""
+
+
+def d_phi(alpha, P, T, knots, degree, X):
+    D    = -dP_f(P, T, knots, degree, X)
     dphi = 0.0
     m = len(T)
     for k in range(m):
-        r_k = cv.bspline_curve(P + alpha * D, T[k]) - X[k]
-        d_k = cv.bspline_curve(D, T[k])
+        r_k = cv.bspline_curve(P + alpha * D, T[k], knots, degree) - X[k]
+        d_k = cv.bspline_curve(D, T[k], knots, degree)
         dphi += np.dot(r_k, d_k)
     return dphi
 
-def dd_phi(alpha, P, T):
-    D     = -dP_f(P, T)
+
+def dd_phi(alpha, P, T, knots, degree, X):
+    D     = -dP_f(P, T, knots, degree, X)
     ddphi = 0.0
     m = len(T)
     for k in range(m):
-        d_k = cv.bspline_curve(D, T[k])
+        d_k = cv.bspline_curve(D, T[k], knots, degree)
         ddphi += np.dot(d_k, d_k)
     return ddphi
 
 
-def newton_alpha(f, grad_f, P, T, alpha0, tol=1e-6, max_iter=1000): # changer f et grad_f pour d_phi et dd_phi
+def newton_alpha(d_phi_func, dd_phi_func, P, T, knots, degree, X, alpha0, tol=1e-6, max_iter=100):
     alpha = alpha0
     for _ in range(max_iter):
-        if np.linalg.norm(grad_f(alpha, P, T)) < tol:
+        grad = d_phi_func(alpha, P, T, knots, degree, X)
+        if abs(grad) < tol:
             break
-        alpha = alpha - f(alpha, P, T) / grad_f(alpha, P, T)
+        denom = dd_phi_func(alpha, P, T, knots, degree, X)
+        if denom == 0:
+            break
+        alpha = alpha - grad / denom
     return alpha
 
 
+def avg_error(P, T, knots, degree, X):
+    return np.sqrt(2 * f(P, T, knots, degree, X) / len(X))
 
-def gradient_descent(x_0, f, df, alpha0, T, max_iter=1000, tol=1e-6):
-    x = x_0
-    alpha = alpha0
-    for i in range(max_iter): 
-        fx = f(alpha0, x, T)
-        dfx = df(alpha0, x, T)
-        alpha = newton_alpha(f, df, x, T, alpha0, tol)
-        dx = - alpha * dfx
-        alpha0 = alpha
-        if np.linalg.norm(dx) < tol:
+
+def gradient_descent(P0, T, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6):
+    P = np.asarray(P0, dtype=float).copy()
+    log_avg_error = []
+    log_iter = []
+    for i in range(max_iter):
+        log_iter.append(np.log10(i+1))
+        log_avg_error.append(np.log10(avg_error(P, T, knots, degree, X)))
+        grad_P = dP_f(P, T, knots, degree, X)
+        norm_grad = np.linalg.norm(grad_P)
+        if norm_grad < tol:
+            print(f"Convergence achieved after {i+1} iterations")
             break
-        x += dx
-    return x
-
-
-# variables définis dans le main
-degree = 2
-knots = np.array([0,0,0,1,1,1])
-X = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
-Pc = np.array( # points de contrôle, initial guess
-    [
-        [0  ,   0],
-        [0.4,   0],
-        [1.0,   0]
-    ])
-
-initial_guess = 0.1
-tkk = newton_tk(X[1], Pc, initial_guess, tol=1e-6, max_iter=1000)
-T = [0.0, tkk, 1.0]
-
-#alphaa = newton_alpha(d_phi, dd_phi, Pc, T, alpha0=0.1, tol=1e-6, max_iter=1000)
-#alpha0 = 0.1
-
-#print(tkk)
-#print(alphaa)
-
-#P_plus = gradient_descent(Pc, phi, d_phi, alpha0, T, max_iter=1000, tol=1e-6)
-#print(P_plus)
+        D = -grad_P
+        alpha = newton_alpha(d_phi, dd_phi, P, T, knots, degree, X, alpha0, tol)
+        if alpha <= 0 or np.isnan(alpha):
+            alpha = alpha0
+        P += alpha * D
+    return P, log_iter, log_avg_error
