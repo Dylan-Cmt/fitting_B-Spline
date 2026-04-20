@@ -1,57 +1,6 @@
 import numpy as np
-from math import comb
+from . import bezier_curves as cv
 
-def bernstein_basis(i, n, t):
-    if n < 0:
-        raise ValueError("Bezier degree must be non-negative")
-    if i < 0 or i > n:
-        return 0.0
-    return comb(n, i) * (t**i) * ((1 - t) ** (n - i))
-
-
-def bernstein_basis_vector(n, t):
-    t = np.asarray(t, dtype=float)
-    basis = np.array([bernstein_basis(i, n, t) for i in range(n + 1)])
-    return basis
-
-
-def eval_bezier_curve(control_points, t):
-    P = np.asarray(control_points, dtype=float)
-    n = len(P) - 1
-    if n < 0:
-        raise ValueError("Control points cannot be empty")
-
-    t = np.asarray(t, dtype=float)
-    if t.ndim == 0: # equivalent to t.shape[1]
-        basis = bernstein_basis_vector(n, t)
-        return basis @ P
-
-    curve = np.zeros((len(t), P.shape[1]))
-    for idx, tt in enumerate(t):
-        basis = bernstein_basis_vector(n, tt)
-        curve[idx] = basis @ P
-    return curve
-
-
-def eval_bezier_derivative(control_points, t):
-    P = np.asarray(control_points, dtype=float)
-    n = len(P) - 1
-    if n <= 0:
-        return np.zeros_like(P[0])
-
-    D = n * (P[1:] - P[:-1]) # hodograph on [0;1]
-    return eval_bezier_curve(D, t)
-
-
-def eval_bezier_second_derivative(control_points, t):
-    P = np.asarray(control_points, dtype=float)
-    n = len(P) - 1
-    if n <= 1:
-        return np.zeros_like(P[0])
-
-    D1 = n * (P[1:] - P[:-1])
-    D2 = (n - 1) * (D1[1:] - D1[:-1])
-    return eval_bezier_curve(D2, t)
 
 """
 def F(t, Xk, control_points):
@@ -60,15 +9,15 @@ def F(t, Xk, control_points):
 """
 
 def F_prime(t, Xk, control_points):
-    P_t = eval_bezier_curve(control_points, t)
-    P_t_prime = eval_bezier_derivative(control_points, t)
+    P_t = cv.eval_bezier_curve(control_points, t)
+    P_t_prime = cv.eval_bezier_derivative(control_points, t)
     return 2 * np.dot(P_t - Xk, P_t_prime)
 
 
 def F_primprim(t, Xk, control_points):
-    P_t = eval_bezier_curve(control_points, t)
-    P_t_prime = eval_bezier_derivative(control_points, t)
-    P_t_second = eval_bezier_second_derivative(control_points, t)
+    P_t = cv.eval_bezier_curve(control_points, t)
+    P_t_prime = cv.eval_bezier_derivative(control_points, t)
+    P_t_second = cv.eval_bezier_second_derivative(control_points, t)
     return 2 * np.dot(P_t_prime, P_t_prime) + 2 * np.dot(P_t - Xk, P_t_second)
 
 
@@ -97,7 +46,7 @@ def all_tk(X, control_points, initial_guesses=None):
 def f(P, T, X):
     total = 0.0
     for tk, Xk in zip(T, X):
-        diff = eval_bezier_curve(P, tk) - Xk
+        diff = cv.eval_bezier_curve(P, tk) - Xk
         total += np.dot(diff, diff)
     return 0.5 * total
 
@@ -107,8 +56,8 @@ def dP_f(P, T, X):
     n = len(P) - 1
     grad = np.zeros_like(P)
     for tk, Xk in zip(T, X):
-        diff = eval_bezier_curve(P, tk) - Xk
-        basis = bernstein_basis_vector(n, tk)
+        diff = cv.eval_bezier_curve(P, tk) - Xk
+        basis = cv.bernstein_basis_vector(n, tk)
         grad += np.outer(basis, diff)
     return grad
 
@@ -122,8 +71,8 @@ def d_phi(alpha, P, T, X):
     D = -dP_f(P, T, X)
     dphi = 0.0
     for tk, Xk in zip(T, X):
-        r = eval_bezier_curve(P + alpha * D, tk) - Xk
-        d = eval_bezier_curve(D, tk)
+        r = cv.eval_bezier_curve(P + alpha * D, tk) - Xk
+        d = cv.eval_bezier_curve(D, tk)
         dphi += np.dot(r, d)
     return dphi
 
@@ -132,7 +81,7 @@ def dd_phi(alpha, P, T, X):
     D = -dP_f(P, T, X)
     ddphi = 0.0
     for tk in T:
-        d = eval_bezier_curve(D, tk)
+        d = cv.eval_bezier_curve(D, tk)
         ddphi += np.dot(d, d)
     return ddphi
 
