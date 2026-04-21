@@ -101,8 +101,9 @@ def newton_alpha(d_phi_func, dd_phi_func, P, T, X, alpha0, tol=1e-6, max_iter=10
 def avg_error(P, T, X):
     return np.sqrt(2 * f(P, T, X) / len(X))
 
-def gradient_descent(P0, T, X, alpha0=0.1, max_iter=100, tol=1e-6):
+def gradient_descent(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
     P = np.asarray(P0, dtype=float).copy()
+    T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
     log_iter = []
     for i in range(max_iter):
@@ -118,5 +119,8 @@ def gradient_descent(P0, T, X, alpha0=0.1, max_iter=100, tol=1e-6):
         if alpha <= 0 or np.isnan(alpha):
             alpha = alpha0
         P += alpha * D
+        P[0] = np.array([[0.0, 0.0]])
+        P[-1] = np.array([[1.0, 0.0]])
+        T = all_tk(X, P, initial_guesses=T)
     return P, log_iter, log_avg_error
     
