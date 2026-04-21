@@ -66,3 +66,14 @@ def generate_sinus_cloud_points(num_points, noise_level):
         y = np.sin(x*np.pi) + rd.uniform(-noise_level, noise_level)
         points.append((x, y))
     return np.array(points)
+
+def naca0012airfoil(x):
+    return 0.6 * ( 0.2969 * np.sqrt(x) - 0.1260 * x - 0.3516 * x**2 + 0.2843 * x**3 - 0.1015 * x**4 )
+
+def generate_naca0012airfoil(num_points, noise_level=0):
+    points = []
+    x = np.linspace(0,1,100)
+    y = [ naca0012airfoil(t) for t in x ]
+    points = [(x1, y1) for x1, y1 in zip(x, y)]
+        
+    return np.array(points)
