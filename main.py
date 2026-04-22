@@ -1,48 +1,140 @@
-from src.bspline_curves import *
-from src.bspline_optimizers import *
+from src.bezier_curves import *
+from src.bezier_optimizer import *
 from src.cloud_points import *
 from src.visualizers import *
 import time
-import numpy as np
 
 if __name__ == "__main__":
     
-    # problem data
-    cloud_points = np.array([[0.0, 0.0],
-                         [0.5, 0.5],
-                         [1.0, 0.0]])
+    #################################################
+    #                                               #
+    #               simple example                  #
+    #                                               #
+    #################################################
 
-    initial_guess = [0.0, 0.1, 1.0]
-    degree = 2
-    knots = np.array([0,0,0,1,1,1])
-    Pc = np.array([
-        [0.0, 0.0],
-        [0.4, 0.0],
-        [1.0, 0.0]
-    ])
-
-    # curve
-    t_vals = np.linspace(0, 1, 100)
-    curve = np.array([bspline_curve(Pc, t, knots, degree) for t in t_vals])
-    #visualize_points(curve)
-    #visualize_data_curve_footpoints_controlpoints(cloud_points, curve, np.array([bspline_curve(Pc, t, knots, degree) for t in initial_guess ]), Pc)
+    """
+    X = np.array([[0.0, 0.0], [0.5, 0.5], [1.0, 0.0]])
+    control_points = np.array([[0.0, 0.0], [0.5, 0.0], [1.0, 0.0]])
+    tk_initial_guess = [0.0, 0.1, 1.0]
+    """
+    """
+    #X = np.array([[0.0, 0.0], [0.4, 0.6], [0.6, 0.4], [1.0, 0.0]])
+    X = generate_sinus_cloud_points(50, 0)
+    #X = generate_square_cloud_points(100, 0.04)
+    #control_points = np.array([[0.0, 0.0], [0.5, 0.0], [1.0, 0.0]])
+    #control_points = np.array([[0.0, 0.0], [0.3, 0.0], [0.8, 0.0], [1.0, 0.0]])
+    control_points = np.linspace(0,1,3)[:, np.newaxis]
+    control_points = np.hstack((control_points, np.zeros_like(control_points)))
+    #tk_initial_guess = [0.0, 0.1, 0.3, 1.0]
+    tk_initial_guess = np.linspace(0.0, 1.0, len(X))
     
-    # footpoints
-    T = all_tk(cloud_points, Pc, knots, degree, initial_guess)
-
-    footpoints = np.array([
-        bspline_curve(Pc, t, knots, degree) for t in T
-    ])
-
-    #visualize_data_curve_footpoints_controlpoints(cloud_points, curve, footpoints, Pc)
     
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, cloud_points, max_iter=500)
-    optimized_curve = np.array([bspline_curve(optimized_control_points, t, knots, degree) for t in t_vals])
-    plt.legend("Courbe optimisée")
-    #visualize_points(optimized_curve)
-    T2 = all_tk(cloud_points, optimized_control_points, knots, degree, T)
-    final_footpoints = np.array([
-        bspline_curve(optimized_control_points, t, knots, degree) for t in T
-    ])
-    visualize_data_curve_footpoints_controlpoints(cloud_points, optimized_curve, final_footpoints, optimized_control_points)
-    visualize_error_convergence(nb_iter, avg_error)
+    unoptimized_curve = eval_bezier_curve(control_points, np.linspace(0.0, 1.0, 50))
+
+    plt.title(f"Initial Bézier curve and foot points before optimization \n degree= ${len(control_points)-1}$ and ${len(X)}$ data points")
+    visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in tk_initial_guess], control_points)
+
+    T = all_tk(X, control_points, initial_guesses=tk_initial_guess)
+
+    plt.title(f"Bezier curve with foot points before optimization \n degree= ${len(control_points)-1}$ and ${len(X)}$ data points")
+    visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in T], control_points)
+
+    start_time = time.time()
+    optimized_control_points, iter, avg_error = gradient_descent(control_points, T, X, max_iter=500)
+    end_time = time.time()
+    print(f"Optimization time: {end_time - start_time:.2f} seconds")
+    optimized_curve = eval_bezier_curve(optimized_control_points, np.linspace(0.0, 1.0, 50))
+    footpoints_of_Pc = [eval_bezier_curve(optimized_control_points, t) for t in T]
+
+    plt.title(f"Bezier curve after gradient descent optimization \n degree= ${len(optimized_control_points)-1}$ and ${len(X)}$ data points")
+    visualize_data_curve_footpoints_controlpoints(X, optimized_curve, footpoints_of_Pc, optimized_control_points)
+
+    visualize_error_convergence(iter, avg_error)
+    """
+
+    #################################################
+    #                                               #
+    #              NACA 0012 Airfoil                #
+    #                                               #
+    #################################################
+
+    """
+    # INITIALISATION
+
+    X = generate_naca0012airfoil(100)
+    #visualize_points(X)
+    control_points = np.linspace(0,1,3)[:, np.newaxis]
+    control_points = np.hstack((control_points, np.zeros_like(control_points)))
+    tk_initial_guess = np.linspace(0.0, 1.0, len(X))
+
+    #unoptimized_curve = eval_bezier_curve(control_points, np.linspace(0.0, 1.0, 50))
+    #plt.title(f"Initial Bézier curve and foot points before optimization \n degree= ${len(control_points)-1}$ and ${len(X)}$ data points")
+    #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in tk_initial_guess], control_points)
+
+    # OPTIMIZATION
+
+    # first foot points calculus
+    T = all_tk(X, control_points, initial_guesses=tk_initial_guess)
+
+    #plt.title(f"Bezier curve with foot points before optimization \n degree= ${len(control_points)-1}$ and ${len(X)}$ data points")
+    #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in T], control_points)
+
+    start_time = time.time()
+    optimized_control_points, iter, avg_error = gradient_descent(control_points, T, X, max_iter=500)
+    end_time = time.time()
+    print(f"Optimization time: {end_time - start_time:.2f} seconds")
+
+    optimized_curve = eval_bezier_curve(optimized_control_points, np.linspace(0.0, 1.0, 50))
+    footpoints_of_Pc = [eval_bezier_curve(optimized_control_points, t) for t in T]
+    plt.title(f"Bezier curve after gradient descent optimization \n degree= ${len(optimized_control_points)-1}$ and ${len(X)}$ data points")
+    visualize_data_curve_footpoints_controlpoints(X, optimized_curve, footpoints_of_Pc, optimized_control_points)
+
+    # convergence of the average error
+    visualize_error_convergence(iter, avg_error)
+    """
+
+
+    #################################################
+    #                                               #
+    #                 Bézier curve                  #
+    #                                               #
+    #################################################
+
+    # INITIALISATION
+    # bezier curve to fit with
+    Beziercontrol_points = np.array([[0.0, 0.0], [0.3, 0.5], [2.4, 0.4], [1.0, 0.0]])
+    X = eval_bezier_curve(Beziercontrol_points, np.linspace(0.0, 1.0, 50))
+    #visualize_points(X)
+
+
+    control_points = np.linspace(0,1,10)[:, np.newaxis]
+    control_points = np.hstack((control_points, np.zeros_like(control_points)))
+    tk_initial_guess = np.linspace(0.0, 1.0, len(X))
+
+    unoptimized_curve = eval_bezier_curve(control_points, np.linspace(0.0, 1.0, 50))
+    #visualize_points(unoptimized_curve)
+    #plt.title(f"Initial Bézier curve and foot points before optimization \n degree= ${len(control_points)-1}$ and ${len(X)}$ data points")
+    #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in tk_initial_guess], control_points)
+
+    # OPTIMIZATION
+
+    # first foot points calculus
+    T = all_tk(X, control_points, initial_guesses=tk_initial_guess)
+
+    plt.title(f"Bezier curve with foot points before optimization \n degree= ${len(control_points)-1}$ and ${len(X)}$ data points")
+    visualize_control_points(Beziercontrol_points)
+    visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(control_points, t) for t in T], control_points)
+
+    start_time = time.time()
+    optimized_control_points, iter, avg_error = gradient_descent(control_points, T, X, max_iter=100)
+    end_time = time.time()
+    print(f"Optimization time: {end_time - start_time:.2f} seconds")
+
+    optimized_curve = eval_bezier_curve(optimized_control_points, np.linspace(0.0, 1.0, 50))
+    footpoints_of_Pc = [eval_bezier_curve(optimized_control_points, t) for t in T]
+    plt.title(f"Bezier curve after gradient descent optimization \n degree= ${len(optimized_control_points)-1}$ and ${len(X)}$ data points")
+    visualize_control_points(Beziercontrol_points)
+    visualize_data_curve_footpoints_controlpoints(X, optimized_curve, footpoints_of_Pc, optimized_control_points)
+
+    # convergence of the average error
+    visualize_error_convergence(iter, avg_error)
