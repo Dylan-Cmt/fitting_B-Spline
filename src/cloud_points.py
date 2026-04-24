@@ -77,3 +77,26 @@ def generate_naca0012airfoil(num_points, noise_level=0):
     points = [(x1, y1) for x1, y1 in zip(x, y)]
         
     return np.array(points)
+
+def generate_curve1(num_points):
+    x = np.linspace(0,1,num_points)
+    y = [0.4*np.sin(t * (np.pi / 2)) for t in x]
+    points = [(x1, y1) for x1, y1 in zip(x, y)]
+    return np.array(points)
+
+def generate_curve2(n_points, r=0.5):
+
+    x_start, x_end = 0, 1
+    n_arc = n_points // 2
+    theta = np.linspace(0, np.pi / 2, n_arc)
+    x_arc = r * (1 - np.cos(theta))
+    y_arc = r * np.sin(theta)
+
+    x_plate = np.linspace(x_arc[-1], x_end, n_points - n_arc)
+    y_plate = r * np.ones_like(x_plate)
+
+    x = np.concatenate([x_arc, x_plate])
+    y = np.concatenate([y_arc, y_plate])
+    points = [(x1, y1) for x1, y1 in zip(x, y)]
+
+    return points
