@@ -68,9 +68,31 @@ def visualize_data_curve_footpoints_controlpoints(cloud, curve, foot_points, con
     plt.legend()
     plt.show()
 
+def visualize_data_curve1_curve2(cloud, curve1, curve2):
+    x1, y1 = zip(*cloud)  # Unzip the first set of points into x and y coordinates
+    x2, y2 = zip(*curve1)
+    x3, y3 = zip(*curve2)
+    plt.scatter(x1, y1, color='green', alpha=0.5, s=30, label='Cloud Points')
+    plt.plot(x2, y2, color='blue', linewidth=1, label='PDM_approx')
+    plt.plot(x3, y3, color='red', linewidth=1, label='TDM_approx')
+    # title is set in main.py
+    plt.xlabel('X-axis')
+    plt.ylabel('Y-axis')
+    plt.axis('equal')  # Set equal aspect ratio
+    plt.grid()
+    plt.legend()
+    plt.show()
+
 def visualize_error_convergence(log_iter, log_avg_error):
     plt.plot(log_iter, log_avg_error, 'o-')
     plt.xlabel('Log10(Iteration)')
     plt.ylabel('Log10(Average Error)')
-    plt.title('Convergence of Gradient Descent')
+    plt.show()
+
+def visualize_two_error_convergence(log_iter, log_avg_error1, log_avg_error2):
+    plt.plot(log_iter, log_avg_error1, color='orange', label='PDM')
+    plt.plot(log_iter, log_avg_error2, color='green' , label='TDM')
+    plt.xlabel('Log10(Iteration)')
+    plt.ylabel('Log10(Average Error)')
+    plt.legend()
     plt.show()

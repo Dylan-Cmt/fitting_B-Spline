@@ -52,3 +52,36 @@ def eval_bezier_second_derivative(control_points, t):
     D1 = n * (P[1:] - P[:-1])
     D2 = (n - 1) * (D1[1:] - D1[:-1])
     return eval_bezier_curve(D2, t)
+
+def unit_tangent(control_points, t):
+    tangent = eval_bezier_derivative(control_points, t)
+    epsilon = 1e-12
+    return tangent / (np.linalg.norm(tangent) + epsilon)
+
+
+"""
+def unit_normal(control_points, t):
+    normal = eval_bezier_second_derivative(control_points, t)
+    return normal / np.linalg.norm(normal)
+"""
+def unit_normal(control_points, t):
+    u_T = unit_tangent(control_points, t)
+    return [u_T[1], -u_T[0]]
+
+
+
+"""
+Pc = np.array([
+        [0.0, 0.0],
+        [-0.5, 1.5],
+        [0.5, 1.0],
+        [1.5, 1.5],
+        [1.0, 0.0]
+    ])
+t = np.linspace(0,1,100)
+c = eval_bezier_curve(Pc,t)
+T = unit_tangent(Pc, 0.7 )
+N = unit_normal(Pc, 0.7 )
+assert np.isclose(np.dot(T, N), 0)
+assert np.isclose(np.linalg.det(np.vstack((N,T))),1)
+"""
