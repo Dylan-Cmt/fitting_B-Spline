@@ -15,7 +15,7 @@ if __name__ == "__main__":
     #                                               #
     #################################################
     
-    """
+    
     # INITIALISATION
 
     #X = np.array([[0.0, 0.0],[0.5, 0.5], [1.0, 0.0]])
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=100)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=100)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     # convergence of the average error
     #visualize_error_convergence(nb_iter, avg_error)
-    """
+    
 
 
     #################################################
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=100)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=100)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -159,7 +159,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=100)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=100)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=100)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=100)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -274,7 +274,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=500)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=500)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=100)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=100)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -377,7 +377,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=100)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=100)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -437,7 +437,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=400)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=400)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -459,7 +459,7 @@ if __name__ == "__main__":
     #                                               #
     #################################################
     
-    
+    """
     # INITIALISATION
     X = cloud_points_reader("double_ellipsoid.txt")
     #visualize_points(X)
@@ -497,7 +497,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     start_time = time.time()
-    optimized_control_points, nb_iter, avg_error = gradient_descent(Pc, T,knots, degree, X, max_iter=100)
+    optimized_control_points, nb_iter, avg_error = gradient_descent_PD(Pc, T,knots, degree, X, max_iter=100)
     end_time = time.time()
     tot_time = end_time - start_time
     tot_iter = 10**(nb_iter[-1])
@@ -511,4 +511,4 @@ if __name__ == "__main__":
 
     # convergence of the average error
     visualize_error_convergence(nb_iter, avg_error)
-    
+    """
