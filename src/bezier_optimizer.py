@@ -143,3 +143,85 @@ def gradient_descent_PD(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
         P[-1] = P0[-1]
         T = all_tk(X, P, initial_guesses=T)
     return P, log_iter, log_avg_error
+
+
+#################################################
+#                                               #
+#                      TDM                      #
+#                                               #
+#################################################
+
+
+def err_TD(t, Xk, control_points):
+    P_t = cv.eval_bezier_curve(control_points, t)
+    return np.dot(np.transpose(P_t - Xk), cv.unit_normal(control_points,t))**2
+    
+
+def f_TD(P, T, X):
+    total = 0.0
+    for tk, Xk in zip(T, X):
+        total += err_TD(tk, Xk, P)
+    return 0.5 * total
+
+
+def dP_f_TD(P, T, X):
+    P = np.asarray(P, dtype=float)
+    n = len(P) - 1
+    grad = np.zeros_like(P)
+    for tk, Xk in zip(T, X):
+        N_transpose = np.transpose(cv.unit_normal(P,tk))
+        diff = cv.eval_bezier_curve(P, tk) - Xk
+        basis = cv.bernstein_basis_vector(n, tk)
+        grad += np.outer(basis, N_transpose * np.dot(N_transpose, diff))
+    return grad
+
+"""
+def phi(alpha, P, T, X):
+    D = -dP_f_TD(P, T, X)
+    return f_TD(P + alpha * D, T, X)
+"""
+
+def d_phi_TD(alpha, P, T, X):
+    D = -dP_f_TD(P, T, X)
+    dphi = 0.0
+    for tk, Xk in zip(T, X):
+        N_transpose = np.transpose(cv.unit_normal(P,tk))
+        r = np.dot(N_transpose , cv.eval_bezier_curve(P + alpha * D, tk) - Xk)
+        d = np.dot(N_transpose , cv.eval_bezier_curve(D, tk))
+        dphi += r * d
+    return dphi
+
+
+def dd_phi_TD(alpha, P, T, X):
+    D = -dP_f_TD(P, T, X)
+    ddphi = 0.0
+    for tk in T:
+        N_transpose = np.transpose(cv.unit_normal(P,tk))
+        d = np.dot(N_transpose , cv.eval_bezier_curve(D, tk))
+        ddphi += d**2
+    return ddphi
+
+
+def gradient_descent_TD(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
+    P = np.asarray(P0, dtype=float).copy()
+    T = np.asarray(T0, dtype=float).copy()
+    log_avg_error = []
+    log_iter = []
+    for i in range(max_iter):
+        log_iter.append(np.log10(i+1))
+        log_avg_error.append(np.log10(avg_error(P, T, X)))
+        grad_P = dP_f_TD(P, T, X)
+        norm_grad = np.linalg.norm(grad_P)
+        if norm_grad < tol:
+            print(f"Convergence achieved after {i+1} iterations")
+            break
+        D = -grad_P
+        alpha = newton_alpha(d_phi_TD, dd_phi_TD, P, T, X, alpha0, tol)
+        if alpha <= 0 or np.isnan(alpha):
+            alpha = alpha0
+        P += alpha * D
+        P[0] = P0[0]
+        P[-1] = P0[-1]
+        T = all_tk(X, P, initial_guesses=T)
+    return P, log_iter, log_avg_error
+    
