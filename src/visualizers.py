@@ -35,6 +35,22 @@ def visualize_two_sets_of_points(cloud, curve):
     plt.legend()
     plt.show()
 
+def visualize_data_curve_controlpoints(cloud, curve, control_points):
+    x1, y1 = zip(*cloud)  # Unzip the first set of points into x and y coordinates
+    x2, y2 = zip(*curve)
+    x3, y3 = zip(*control_points)
+    plt.scatter(x1, y1, color='green', alpha=0.5, s=30, label='Cloud Points')
+    plt.plot(x3, y3, color='blue', linestyle='--', label='Control Polygon')
+    plt.scatter(x3, y3, color='red', marker='x', s=50, label='Control Points')
+    plt.plot(x2, y2, color='red', linewidth=1, label='Curve')
+    # title is set in main.py
+    plt.xlabel('X-axis')
+    plt.ylabel('Y-axis')
+    plt.axis('equal')  # Set equal aspect ratio
+    plt.grid()
+    plt.legend()
+    plt.show()
+
 def visualize_data_curve_footpoints_controlpoints(cloud, curve, foot_points, control_points):
     x1, y1 = zip(*cloud)  # Unzip the first set of points into x and y coordinates
     x2, y2 = zip(*curve)

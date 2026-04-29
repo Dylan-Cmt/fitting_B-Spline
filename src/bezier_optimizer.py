@@ -119,8 +119,8 @@ def gradient_descent(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
         if alpha <= 0 or np.isnan(alpha):
             alpha = alpha0
         P += alpha * D
-        P[0] = np.array([[0.0, 0.0]])
-        P[-1] = np.array([[1.0, 0.0]])
+        P[0] = P0[0]
+        P[-1] = P0[-1]
         T = all_tk(X, P, initial_guesses=T)
     return P, log_iter, log_avg_error
     
