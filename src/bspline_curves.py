@@ -87,3 +87,13 @@ def dtt_bspline_curve(P, t, knots, degree):
         N = dtt_bspline_basis(i, degree, t, knots)
         curve += N * P[i]
     return curve
+
+def unit_tangent(control_points, t, knots, degree):
+    tangent = dt_bspline_curve(control_points, t, knots, degree)
+    epsilon = 1e-12
+    return tangent / (np.linalg.norm(tangent) + epsilon)
+
+
+def unit_normal(control_points, t, knots, degree):
+    u_T = unit_tangent(control_points, t, knots, degree)
+    return [u_T[1], -u_T[0]]
