@@ -11,44 +11,55 @@ from . import bspline_curves as cv
 
 # function to minimize for finding tk
 def err_PD(t, Xk, control_points, knots, degree):
-    P = cv.bspline_curve(control_points, t, knots, degree)
-    return np.linalg.norm(P - Xk) ** 2
+    P_t = cv.bspline_curve(control_points, t, knots, degree)
+    return np.linalg.norm(P_t - Xk) ** 2
 
 
 # function for which we want to find the 0
 def err_PD_prime(t, Xk, control_points, knots, degree):
-    P = cv.bspline_curve(control_points, t, knots, degree)
-    Pprime = cv.dt_bspline_curve(control_points, t, knots, degree)
-    return 2 * np.dot(P - Xk, Pprime)
+    P_t = cv.bspline_curve(control_points, t, knots, degree)
+    P_t_prime = cv.dt_bspline_curve(control_points, t, knots, degree)
+    return 2 * np.dot(P_t - Xk, P_t_prime)
 
 
 def err_PD_primprim(t, Xk, control_points, knots, degree):
-    P = cv.bspline_curve(control_points, t, knots, degree)
-    Pprime = cv.dt_bspline_curve(control_points, t, knots, degree)
-    Pprimprim = cv.dtt_bspline_curve(control_points, t, knots, degree)
-    return 2 * np.dot(Pprime, Pprime) + 2 * np.dot(P - Xk, Pprimprim)
+    P_t = cv.bspline_curve(control_points, t, knots, degree)
+    P_t_prime = cv.dt_bspline_curve(control_points, t, knots, degree)
+    P_t_second = cv.dtt_bspline_curve(control_points, t, knots, degree)
+    return 2 * np.dot(P_t_prime, P_t_prime) + 2 * np.dot(P_t - Xk, P_t_second)
 
 
-def newton_tk(Xk, control_points, knots, degree, initial_guess, tol=1e-6, max_iter=100):
-    t = np.clip(initial_guess, 0.0, 1.0) # keep tk in [0;1]
+def newton_tk(Xk, control_points, knots, degree, initial_guess,
+              tol=1e-6, max_iter=100):
+    t_min = knots[degree]
+    t_max = knots[-(degree + 1)]
+    t = np.clip(initial_guess, t_min + 1e-8, t_max - 1e-8)
     for _ in range(max_iter):
-        Fp = err_PD_prime(t, Xk, control_points, knots, degree)
+        Fp  = err_PD_prime(t, Xk, control_points, knots, degree)
         Fpp = err_PD_primprim(t, Xk, control_points, knots, degree)
-        if Fpp == 0:
+        if abs(Fpp) < 1e-14:
             break
-        t_new = t - Fp / Fpp
-        t_new = np.clip(t_new, 0.0, 1.0)
+        t_new = np.clip(t - Fp / Fpp, t_min + 1e-8, t_max - 1e-8)
         if abs(t_new - t) < tol:
             return t_new
         t = t_new
     return t
 
 
-def all_tk(X, control_points, knots, degree, initial_guesses=None):
-    X = np.asarray(X, dtype=float)
-    if initial_guesses is None:
-        initial_guesses = np.linspace(0.0, 1.0, len(X))
-    return [newton_tk(Xk, control_points, knots, degree, guess) for Xk, guess in zip(X, initial_guesses)]
+def all_tk(X, control_points, knots, degree, initial_guesses=None, n_samples=50):
+    t_min = knots[degree]
+    t_max = knots[-(degree + 1)]
+    
+    # for the first iter the first initial guess is found automatically
+    if initial_guesses is None: 
+        t_samples = np.linspace(t_min, t_max, n_samples, endpoint=False)
+        initial_guesses = []
+        for Xk in X:
+            dists = [err_PD(t, Xk, control_points, knots, degree) for t in t_samples]
+            initial_guesses.append(t_samples[np.argmin(dists)])
+    # for the next iter, we take previous tks as initial guesses
+    return [newton_tk(Xk, control_points, knots, degree, t0)
+            for Xk, t0 in zip(X, initial_guesses)]
 
 
 # d_phi and dd_phi are defined below
