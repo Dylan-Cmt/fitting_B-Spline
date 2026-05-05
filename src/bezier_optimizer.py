@@ -32,7 +32,7 @@ def newton_tk(Xk, control_points, initial_guess, tol=1e-6, max_iter=100):
     for _ in range(max_iter):
         Fp = err_PD_prime(t, Xk, control_points)
         Fpp = err_PD_primprim(t, Xk, control_points)
-        if Fpp == 0:
+        if abs(Fpp) < 1e-14:
             break
         t_new = t - Fp / Fpp
         t_new = np.clip(t_new, 0.0, 1.0)
@@ -42,12 +42,18 @@ def newton_tk(Xk, control_points, initial_guess, tol=1e-6, max_iter=100):
     return t
 
 
-def all_tk(X, control_points, initial_guesses=None):
-    X = np.asarray(X, dtype=float)
-    if initial_guesses is None:
-        initial_guesses = np.linspace(0.0, 1.0, len(X))
-    return [newton_tk(Xk, control_points, guess) for Xk, guess in zip(X, initial_guesses)]
 
+def all_tk(X, control_points, initial_guesses=None, n_samples=50):
+    # for the first iter the first initial guess is found automatically
+    if initial_guesses is None: 
+        t_samples = np.linspace(0, 1, n_samples)
+        initial_guesses = []
+        for Xk in X:
+            dists = [err_PD(t, Xk, control_points) for t in t_samples]
+            initial_guesses.append(t_samples[np.argmin(dists)])
+    # for the next iter, we take previous tks as initial guesses
+    return [newton_tk(Xk, control_points, t0)
+            for Xk, t0 in zip(X, initial_guesses)]
 
 # d_phi and dd_phi are defined below
 # alpha is computed for gradient descents below
