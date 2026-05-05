@@ -117,9 +117,9 @@ def dP_f_PD(P, T, knots, degree, X):
 
 
 """
-def phi_PD(alpha, P, T, X):
+def phi_PD(alpha, P, T, knots, degree, X):
     D = -dP_f_PD(P, T, knots, degree, X)
-    return f_PD(P + alpha * D, T, knots, degree)
+    return f_PD(P + alpha * D, T, knots, degree, X)
 """
 
 
@@ -159,6 +159,91 @@ def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
             break
         D = -grad_P
         alpha = newton_alpha(d_phi_PD, dd_phi_PD, P, T, knots, degree, X, alpha0, tol)
+        if alpha <= 0 or np.isnan(alpha):
+            alpha = alpha0
+        P += alpha * D
+        P[0] = P0[0]
+        P[-1] = P0[-1]
+        T = all_tk(X, P, knots, degree, initial_guesses=T)
+    return P, log_iter, log_avg_error
+
+
+#################################################
+#                                               #
+#                      TDM                      #
+#                                               #
+#################################################
+
+def err_TD(t, Xk, control_points, knots, degree):
+    P_t = cv.bspline_curve(control_points, t, knots, degree)
+    n = cv.unit_normal(control_points, t, knots, degree)
+    return np.dot(P_t - Xk, n) ** 2
+
+# objective function
+def f_TD(P, T, knots, degree, X):
+    return 0.5 * sum(err_TD(T[k], X[k], P, knots, degree) for k in range(len(T)))
+
+
+def dP_f_TD(P, T, knots, degree, X):
+    m = P.shape[0]
+    n = len(T)
+    grad_P = np.zeros_like(P)
+
+    for k in range(n):
+        d_k = cv.bspline_curve(P, T[k], knots, degree) - X[k]
+        n_k = cv.unit_normal(P, T[k], knots, degree)
+        d_proj = np.dot(n_k, d_k)
+        for i in range(m):
+            B_ik = cv.bspline_basis(i, degree, T[k], knots)
+            grad_P[i] += d_proj * B_ik * n_k
+    return grad_P
+
+
+"""
+def phi_TD(alpha, P, T, knots, degree, X):
+    D = -dP_f_TD(P, T, knots, degree, X)
+    return f_TD(P + alpha * D, T, knots, degree, X)
+"""
+
+
+def d_phi_TD(alpha, P, T, knots, degree, X):
+    D    = -dP_f_TD(P, T, knots, degree, X)
+    dphi = 0.0
+    m = len(T)
+    for k in range(m):
+        n_k = cv.unit_normal(P, T[k], knots, degree)
+        r_k = cv.bspline_curve(P + alpha * D, T[k], knots, degree) - X[k]
+        d_k = np.dot(n_k, cv.bspline_curve(D, T[k], knots, degree))
+        dphi += np.dot(n_k, r_k) * d_k
+    return dphi
+
+
+def dd_phi_TD(alpha, P, T, knots, degree, X):
+    D     = -dP_f_TD(P, T, knots, degree, X)
+    ddphi = 0.0
+    m = len(T)
+    for k in range(m):
+        n_k = cv.unit_normal(P, T[k], knots, degree)
+        d_k = np.dot(n_k, cv.bspline_curve(D, T[k], knots, degree))
+        ddphi += d_k * d_k
+    return ddphi
+
+
+def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6):
+    P = np.asarray(P0, dtype=float).copy()
+    T = np.asarray(T0, dtype=float).copy()
+    log_avg_error = []
+    log_iter = []
+    for i in range(max_iter):
+        log_iter.append(np.log10(i+1))
+        log_avg_error.append(np.log10(avg_error(P, T, knots, degree, X)))
+        grad_P = dP_f_TD(P, T, knots, degree, X)
+        norm_grad = np.linalg.norm(grad_P)
+        if norm_grad < tol:
+            print(f"Convergence achieved after {i+1} iterations")
+            break
+        D = -grad_P
+        alpha = newton_alpha(d_phi_TD, dd_phi_TD, P, T, knots, degree, X, alpha0, tol)
         if alpha <= 0 or np.isnan(alpha):
             alpha = alpha0
         P += alpha * D
