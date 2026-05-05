@@ -56,7 +56,7 @@ def eval_bezier_second_derivative(control_points, t):
 def unit_tangent(control_points, t):
     tangent = eval_bezier_derivative(control_points, t)
     epsilon = 1e-12
-    return tangent / (np.linalg.norm(tangent) + epsilon)
+    return np.asarray(tangent / (np.linalg.norm(tangent) + epsilon), dtype=float)
 
 
 """
@@ -66,7 +66,7 @@ def unit_normal(control_points, t):
 """
 def unit_normal(control_points, t):
     u_T = unit_tangent(control_points, t)
-    return [u_T[1], -u_T[0]]
+    return np.asarray([u_T[1], -u_T[0]], dtype=float)
 
 
 

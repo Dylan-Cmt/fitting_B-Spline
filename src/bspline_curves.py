@@ -91,9 +91,9 @@ def dtt_bspline_curve(P, t, knots, degree):
 def unit_tangent(control_points, t, knots, degree):
     tangent = dt_bspline_curve(control_points, t, knots, degree)
     epsilon = 1e-12
-    return tangent / (np.linalg.norm(tangent) + epsilon)
+    return np.asarray(tangent / (np.linalg.norm(tangent) + epsilon), dtype=float)
 
 
 def unit_normal(control_points, t, knots, degree):
     u_T = unit_tangent(control_points, t, knots, degree)
-    return [u_T[1], -u_T[0]]
+    return np.asarray([u_T[1], -u_T[0]], dtype=float)
