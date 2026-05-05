@@ -160,7 +160,7 @@ def gradient_descent_PD(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
 
 def err_TD(t, Xk, control_points):
     P_t = cv.eval_bezier_curve(control_points, t)
-    return np.dot(np.transpose(P_t - Xk), cv.unit_normal(control_points,t))**2
+    return np.dot(P_t - Xk), cv.unit_normal(control_points,t)**2
     
 
 def f_TD(P, T, X):
@@ -175,7 +175,7 @@ def dP_f_TD(P, T, X):
     n = len(P) - 1
     grad = np.zeros_like(P)
     for tk, Xk in zip(T, X):
-        N_transpose = np.transpose(cv.unit_normal(P,tk))
+        N_transpose = cv.unit_normal(P,tk)
         diff = cv.eval_bezier_curve(P, tk) - Xk
         basis = cv.bernstein_basis_vector(n, tk)
         grad += np.outer(basis, N_transpose * np.dot(N_transpose, diff))
@@ -191,7 +191,7 @@ def d_phi_TD(alpha, P, T, X):
     D = -dP_f_TD(P, T, X)
     dphi = 0.0
     for tk, Xk in zip(T, X):
-        N_transpose = np.transpose(cv.unit_normal(P,tk))
+        N_transpose = cv.unit_normal(P,tk)
         r = np.dot(N_transpose , cv.eval_bezier_curve(P + alpha * D, tk) - Xk)
         d = np.dot(N_transpose , cv.eval_bezier_curve(D, tk))
         dphi += r * d
@@ -202,7 +202,7 @@ def dd_phi_TD(alpha, P, T, X):
     D = -dP_f_TD(P, T, X)
     ddphi = 0.0
     for tk in T:
-        N_transpose = np.transpose(cv.unit_normal(P,tk))
+        N_transpose = cv.unit_normal(P,tk)
         d = np.dot(N_transpose , cv.eval_bezier_curve(D, tk))
         ddphi += d**2
     return ddphi
