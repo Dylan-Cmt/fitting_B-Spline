@@ -160,7 +160,7 @@ def gradient_descent_PD(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
 
 def err_TD(t, Xk, control_points):
     P_t = cv.eval_bezier_curve(control_points, t)
-    return np.dot(P_t - Xk), cv.unit_normal(control_points,t)**2
+    return np.dot((P_t - Xk), cv.unit_normal(control_points,t))**2
     
 
 def f_TD(P, T, X):
@@ -175,10 +175,10 @@ def dP_f_TD(P, T, X):
     n = len(P) - 1
     grad = np.zeros_like(P)
     for tk, Xk in zip(T, X):
-        N_transpose = cv.unit_normal(P,tk)
+        unit_N = cv.unit_normal(P,tk)
         diff = cv.eval_bezier_curve(P, tk) - Xk
         basis = cv.bernstein_basis_vector(n, tk)
-        grad += np.outer(basis, N_transpose * np.dot(N_transpose, diff))
+        grad += np.outer(basis, unit_N * np.dot(unit_N, diff))
     return grad
 
 """
@@ -191,9 +191,9 @@ def d_phi_TD(alpha, P, T, X):
     D = -dP_f_TD(P, T, X)
     dphi = 0.0
     for tk, Xk in zip(T, X):
-        N_transpose = cv.unit_normal(P,tk)
-        r = np.dot(N_transpose , cv.eval_bezier_curve(P + alpha * D, tk) - Xk)
-        d = np.dot(N_transpose , cv.eval_bezier_curve(D, tk))
+        unit_N = cv.unit_normal(P,tk)
+        r = np.dot(unit_N , cv.eval_bezier_curve(P + alpha * D, tk) - Xk)
+        d = np.dot(unit_N , cv.eval_bezier_curve(D, tk))
         dphi += r * d
     return dphi
 
@@ -202,8 +202,8 @@ def dd_phi_TD(alpha, P, T, X):
     D = -dP_f_TD(P, T, X)
     ddphi = 0.0
     for tk in T:
-        N_transpose = cv.unit_normal(P,tk)
-        d = np.dot(N_transpose , cv.eval_bezier_curve(D, tk))
+        unit_N = cv.unit_normal(P,tk)
+        d = np.dot(unit_N , cv.eval_bezier_curve(D, tk))
         ddphi += d**2
     return ddphi
 
@@ -230,4 +230,135 @@ def gradient_descent_TD(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
         P[-1] = P0[-1]
         T = all_tk(X, P, initial_guesses=T)
     return P, log_iter, log_avg_error
+
+
+#################################################
+#                                               #
+#                      SDM                      #
+#                                               #
+#################################################
+
+def signed_distance(t,Xk, control_points):
+    P_t = cv.eval_bezier_curve(control_points, t)
+    d = np.linalg.norm(P_t - Xk)
+    n = cv.unit_normal(control_points, t)
+    sign = -np.sign(np.dot(P_t - Xk, n))
+    return d * sign
+
+
+def err_SD(t, Xk, control_points):
+    d = signed_distance(t,Xk, control_points)
+    roh = cv.curvature_radius(control_points, t)
+    if (d < 0):
+        T = cv.unit_tangent(control_points, t)
+        N = cv.unit_normal(control_points, t)
+        P_t = cv.eval_bezier_curve(control_points, t)
+
+        coeff = d / (d - roh)
+        diff = P_t - Xk
+        first_part = coeff * np.dot(diff, T)**2
+        second_part = np.dot(diff, N)**2
+        return first_part + second_part
+    elif (0 <= d < roh):
+        return err_TD(t, Xk, control_points)
+    else:
+        raise ValueError("d must not be higher than roh, footpoint calculus failed")
+
     
+
+def f_SD(P, T, X):
+    return 0.5 * sum(err_SD(T[k], X[k], P) for k in range(len(T)))
+
+
+def dP_f_SD(P, T, X):
+    P = np.asarray(P, dtype=float)
+    n = len(P) - 1
+    grad = np.zeros_like(P)
+    for tk, Xk in zip(T, X):
+        signed_d = signed_distance(tk,Xk, P)
+        unit_N = cv.unit_normal(P,tk)
+        diff = cv.eval_bezier_curve(P, tk) - Xk
+        basis = cv.bernstein_basis_vector(n, tk)
+        if (signed_d < 0):
+            roh = cv.curvature_radius(P, tk)
+            unit_T = cv.unit_tangent(P,tk)
+            coeff = signed_d / (signed_d - roh)
+
+            first_part = coeff * np.outer(basis, unit_T * np.dot(unit_T, diff))
+            second_part = np.outer(basis, unit_N * np.dot(unit_N, diff))
+            grad += first_part
+
+        grad += np.outer(basis, unit_N * np.dot(unit_N, diff))
+    return grad
+
+"""
+def phi(alpha, P, T, X):
+    D = -dP_f_SD(P, T, X)
+    return f_SD(P + alpha * D, T, X)
+"""
+
+def d_phi_SD(alpha, P, T, X):
+    D = -dP_f_SD(P, T, X)
+    dphi = 0.0
+    for tk, Xk in zip(T, X):
+        signed_d = signed_distance(tk,Xk, P)
+        diff = cv.eval_bezier_curve(P + alpha * D, tk) - Xk
+        if (signed_d < 0):
+            roh = cv.curvature_radius(P, tk)
+            unit_T = cv.unit_tangent(P,tk)
+            coeff = signed_d / (signed_d - roh)
+
+            r1 = coeff * np.dot(unit_T , diff)
+            d1 = np.dot(unit_T , cv.eval_bezier_curve(D, tk))
+            first_part = r1 * d1
+            dphi += first_part
+        
+        unit_N = cv.unit_normal(P,tk)
+        r = np.dot(unit_N , diff)
+        d = np.dot(unit_N , cv.eval_bezier_curve(D, tk))
+        dphi += r * d
+    return dphi
+
+
+def dd_phi_SD(alpha, P, T, X):
+    D = -dP_f_SD(P, T, X)
+    ddphi = 0.0
+    for tk, Xk in zip(T, X):
+        signed_d = signed_distance(tk,Xk, P)
+        
+        if (signed_d < 0):
+            roh = cv.curvature_radius(P, tk)
+            unit_T = cv.unit_tangent(P,tk)
+            coeff = signed_d / (signed_d - roh)
+
+            d = np.dot(unit_T , cv.eval_bezier_curve(D, tk))
+            ddphi += coeff * (d**2)
+
+        unit_N = cv.unit_normal(P,tk)
+        d = np.dot(unit_N , cv.eval_bezier_curve(D, tk))
+        ddphi += d**2
+    return ddphi
+
+
+def gradient_descent_SD(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
+    P = np.asarray(P0, dtype=float).copy()
+    T = np.asarray(T0, dtype=float).copy()
+    log_avg_error = []
+    log_iter = []
+    for i in range(max_iter):
+        log_iter.append(np.log10(i+1))
+        log_avg_error.append(np.log10(avg_error(P, T, X)))
+        grad_P = dP_f_SD(P, T, X)
+        norm_grad = np.linalg.norm(grad_P)
+        if norm_grad < tol:
+            print(f"Convergence achieved after {i+1} iterations")
+            break
+        D = -grad_P
+        alpha = newton_alpha(d_phi_SD, dd_phi_SD, P, T, X, alpha0, tol)
+        if alpha <= 0 or np.isnan(alpha):
+            alpha = alpha0
+        P += alpha * D
+        P[0] = P0[0]
+        P[-1] = P0[-1]
+        T = all_tk(X, P, initial_guesses=T)
+    return P, log_iter, log_avg_error
