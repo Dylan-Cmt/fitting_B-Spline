@@ -85,3 +85,21 @@ N = unit_normal(Pc, 0.7 )
 assert np.isclose(np.dot(T, N), 0)
 assert np.isclose(np.linalg.det(np.vstack((N,T))),1)
 """
+
+def curvature2D(control_points , t):
+    P_t_prime = eval_bezier_derivative(control_points, t)
+    P_t_second = eval_bezier_second_derivative(control_points, t)
+    denom = np.linalg.norm(P_t_prime)**3
+    if (denom < 1e-12):
+        return 1e12
+    num = np.linalg.det(np.vstack((P_t_prime,P_t_second)))
+    return abs(num) / denom
+
+
+def curvature_radius(control_points, t):
+    K = curvature2D(control_points, t)
+    if (K < 1e-12):
+        return 1e12
+    elif(K >= 1e12):
+        return 0
+    return 1/K
