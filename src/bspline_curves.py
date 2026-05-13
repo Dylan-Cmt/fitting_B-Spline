@@ -97,3 +97,21 @@ def unit_tangent(control_points, t, knots, degree):
 def unit_normal(control_points, t, knots, degree):
     u_T = unit_tangent(control_points, t, knots, degree)
     return np.asarray([u_T[1], -u_T[0]], dtype=float)
+
+def curvature2D(control_points , t, knots, degree):
+    P_t_prime = bspline_curve(control_points, t, knots, degree)
+    P_t_second = dt_bspline_curve(control_points, t, knots, degree)
+    denom = np.linalg.norm(P_t_prime)**3
+    if (denom < 1e-12):
+        return 1e12
+    num = np.linalg.det(np.vstack((P_t_prime,P_t_second)))
+    return abs(num) / denom
+
+
+def curvature_radius(control_points, t, knots, degree):
+    K = curvature2D(control_points, t, knots, degree)
+    if (K < 1e-12):
+        return 1e12
+    elif(K >= 1e12):
+        return 0
+    return 1/K
