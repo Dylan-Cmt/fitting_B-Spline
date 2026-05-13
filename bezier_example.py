@@ -7,19 +7,19 @@ import time
 
 def compare3methods(P,T,X, max_iter=100):
     start_time1 = time.time()
-    optimized_control_points1, tot_iter1, avg_error1 = gradient_descent_PD(Pc, T, X, max_iter=max_iter)
+    optimized_control_points1, tot_iter1, avg_error1 = gradient_descent_PD(P, T, X, max_iter=max_iter)
     end_time1 = time.time()
     tot_time1 = end_time1 - start_time1
     print(f"Optimization time for PDM: {tot_time1:.2f} seconds")
 
     start_time2 = time.time()
-    optimized_control_points2, tot_iter2, avg_error2 = gradient_descent_TD(Pc, T, X, max_iter=max_iter)
+    optimized_control_points2, tot_iter2, avg_error2 = gradient_descent_TD(P, T, X, max_iter=max_iter)
     end_time2 = time.time()
     tot_time2 = end_time2 - start_time2
     print(f"Optimization time for TDM: {tot_time2:.2f} seconds")
 
     start_time3 = time.time()
-    optimized_control_points3, tot_iter3, avg_error3 = gradient_descent_SD(Pc, T, X, max_iter=max_iter)
+    optimized_control_points3, tot_iter3, avg_error3 = gradient_descent_SD(P, T, X, max_iter=max_iter)
     end_time3 = time.time()
     tot_time3 = end_time3 - start_time3
     print(f"Optimization time for SDM: {tot_time2:.2f} seconds")
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     #                                               #
     #################################################
 
-    """
+    
     # INITIALISATION
     # bezier curve to fit with
     Beziercontrol_points = np.array([[0.0, 0.0], [0.3, 0.5], [2.4, 0.4], [1.0, 0.0]])
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     #visualize_data_curve_footpoints_controlpoints(X, optimized_curve, footpoints_of_Pc, optimized_control_points1)
 
     #visualize_error_convergence(tot_iter1, avg_error1)
-    """
+    
 
     #################################################
     #                                               #
