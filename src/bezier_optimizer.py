@@ -124,9 +124,6 @@ def dd_phi_PD(alpha, P, T, X):
     return ddphi
 
 
-def avg_error_PD(P, T, X):
-    return np.sqrt(2 * f_PD(P, T, X) / len(X))
-
 def gradient_descent_PD(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
@@ -134,7 +131,7 @@ def gradient_descent_PD(P0, T0, X, alpha0=0.1, max_iter=100, tol=1e-6):
     log_iter = []
     for i in range(max_iter):
         log_iter.append(np.log10(i+1))
-        log_avg_error.append(np.log10(avg_error_PD(P, T, X)))
+        log_avg_error.append(np.log10(avg_error(P, T, X)))
         grad_P = dP_f_PD(P, T, X)
         norm_grad = np.linalg.norm(grad_P)
         if norm_grad < tol:
