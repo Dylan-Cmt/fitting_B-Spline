@@ -44,7 +44,7 @@ def err_PD(t, Xk, control_points):
 # output:
 #   - first derivative of the error
 ##
-def err_PD_prime(t, Xk, control_points):
+def err_PD_prim(t, Xk, control_points):
     P_t = cv.eval_bezier_curve(control_points, t)
     P_t_prime = cv.eval_bezier_derivative(control_points, t)
     return 2 * np.dot(P_t - Xk, P_t_prime)
@@ -82,6 +82,8 @@ def err_PD_primprim(t, Xk, control_points):
 #   Newton's method is preferred here.
 #
 # input:
+#   - err_prim : function returning f'(t)
+#   - err_primprim : function returning f''(t)
 #   - Xk : data point
 #   - control_points : Bézier control points
 #   - initial_guess : initial value for tk
@@ -91,12 +93,12 @@ def err_PD_primprim(t, Xk, control_points):
 # output:
 #   - optimized parameter tk
 ##
-def newton_tk(Xk,control_points,initial_guess,tol=1e-6,max_iter=100):
+def newton_tk(err_prim, err_primprim, Xk,control_points,initial_guess,tol=1e-6,max_iter=100):
     t = np.clip(initial_guess, 0.0, 1.0)
 
     for _ in range(max_iter):
-        Fp = err_PD_prime(t, Xk, control_points)
-        Fpp = err_PD_primprim(t, Xk, control_points)
+        Fp = err_prim(t, Xk, control_points)
+        Fpp = err_primprim(t, Xk, control_points)
         if abs(Fpp) < 1e-14:
             break
         t_new = t - Fp / Fpp
@@ -140,7 +142,7 @@ def all_tk(X,control_points,initial_guesses=None,n_samples=50):
     # Next iterations:
     # previous tk values are reused
     return [
-        newton_tk(Xk, control_points, t0)
+        newton_tk(err_PD_prim, err_PD_primprim, Xk, control_points, t0)
         for Xk, t0 in zip(X, initial_guesses)
     ]
 
@@ -249,21 +251,20 @@ def dP_f_PD(P, T, X):
         grad += np.outer(basis, diff)
     return grad
 
-"""
 ##
 # function: phi_PD
 #
 # description:
 #   Evaluates the line-search function phi
-#   used in the Tangent Distance Minimization (PDM).
-#   This function is not explicitly used, but
+#   used in the Point Distance Minimization (PDM).
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_PD(alpha, P, T, X):
     D = -dP_f_PD(P, T, X)
     return f_PD(P + alpha * D, T, X)
-"""
 
 
 ##
@@ -350,8 +351,7 @@ def gradient_descent_PD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6, constraint=Tru
     log_iter = []
     for i in range(max_iter):
         log_iter.append(np.log10(i + 1))
-        log_avg_error.append(np.log10(avg_error(P, T, X))
-        )
+        log_avg_error.append(np.log10(avg_error(P, T, X)))
         grad_P = dP_f_PD(P, T, X)
         norm_grad = np.linalg.norm(grad_P)
         # Convergence test
@@ -455,21 +455,22 @@ def dP_f_TD(P, T, X):
         grad += np.outer(basis,unit_N * np.dot(unit_N, diff))
     return grad
 
-"""
+
 ##
 # function: phi_TD
 #
 # description:
 #   Evaluates the line-search function phi
 #   used in the Tangent Distance Minimization (TDM).
-#   This function is not explicitly used, but
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_TD(alpha, P, T, X):
     D = -dP_f_TD(P, T, X)
     return f_TD(P + alpha * D, T, X)
-"""
+
 
 
 ##
@@ -720,22 +721,23 @@ def dP_f_SD(P, T, X):
     return grad
 
 
-"""
+
 ##
 # function: phi_SD
 #
 # description:
 #   Evaluates the line-search function phi
 #   used in the Squared Distance Minimization (SDM).
-#   This function is not explicitly used, but
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_SD(alpha, P, T, X):
     D = -dP_f_SD(P, T, X)
 
     return f_SD(P + alpha * D, T, X)
-"""
+
 
 
 ##
