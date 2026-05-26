@@ -391,8 +391,9 @@ def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         P += alpha * D
         if constraint:
             # constraints can be modified in need
-            P[0] = P0[0]
-            P[-1] = P0[-1]
+            #P[0] = P0[0]
+            #P[-1] = P0[-1]
+            P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error
 
@@ -612,8 +613,9 @@ def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         P += alpha * D
         if constraint:
             # constraints can be modified in need
-            P[0] = P0[0]
-            P[-1] = P0[-1]
+            #P[0] = P0[0]
+            #P[-1] = P0[-1]
+            P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error
 
@@ -914,7 +916,8 @@ def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         P += alpha * D
         if constraint:
             # constraints can be modified in need
-            P[0] = P0[0]
-            P[-1] = P0[-1]
+            #P[0] = P0[0]
+            #P[-1] = P0[-1]
+            P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error
