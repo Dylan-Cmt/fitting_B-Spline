@@ -97,7 +97,7 @@ def eval_bezier_curve(control_points, t):
 #
 #   The derivative corresponds to the hodograph:
 #
-#   P'(t) = n * (P_(i+1) - P_i)
+#   P'(t) = n * Σ B_i^(n-1)(t) * (P_(i+1) - P_i)
 #
 # input:
 #   - control_points : array of control points
@@ -156,6 +156,9 @@ def eval_bezier_second_derivative(control_points, t):
 #   - unit tangent vector
 ##
 def unit_tangent(control_points, t):
+    degree = len(control_points) - 1
+    if degree < 1:
+        raise ValueError("Invalid Bézier degree: tangent computation requires degree >= 1.")
     tangent = eval_bezier_derivative(control_points, t)
     epsilon = 1e-12
     return np.asarray(tangent / (np.linalg.norm(tangent) + epsilon),dtype=float)
@@ -176,6 +179,7 @@ def unit_tangent(control_points, t):
 #   - 2D unit normal vector
 ##
 def unit_normal(control_points, t):
+    degree = len(control_points) - 1
     u_T = unit_tangent(control_points, t)
     return np.asarray([u_T[1], -u_T[0]], dtype=float)
 

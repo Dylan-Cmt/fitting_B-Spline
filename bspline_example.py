@@ -214,6 +214,46 @@ if __name__ == "__main__":
 
     #################################################
     #                                               #
+    #              Closed square shape              #
+    #                                               #
+    #################################################
+    
+    """
+    # INITIALISATION
+
+    X = generate_closed_square_cloud_points(33, 0)
+    #visualize_points(X)
+    Pc = np.array([ [1.15, 0.5],[1.15, 0.4],[1.15, 0.3],[1.15, 0.2],[1.15, 0.1],[0.15, 0.25], [0.15, 0.85],[1.15, 0.9],[1.15, 0.8], [1.15, 0.7],[1.15, 0.6],[1.15, 0.5],[1.15, 0.5]])
+    degree = 3
+    n = len(Pc)
+    # knot size = nb_ctrlpts + degree + 1
+    knots = np.arange(n - degree + 1) / (n -degree)
+    knots = np.concatenate(([knots[0]]*degree, knots, [knots[-1]]*degree))
+
+    # OPTIMIZATION
+
+    # first foot points calculus
+    T = all_tk(X, Pc, knots, degree)
+    footpoints_on_the_curve = np.array([
+        bspline_curve(Pc, t, knots, degree) for t in T
+    ])
+
+    t_vals = np.linspace(0, 1, 100)
+    unoptimized_curve = np.array([bspline_curve(Pc, t, knots, degree) for t in t_vals])
+    #plt.title(f"Initial Bspline curve before optimization \n degree= ${degree}$ and ${len(X)}$ data points")
+    #visualize_data_curve_controlpoints(X, unoptimized_curve, Pc)
+    plt.title(f"Bspline curve with foot points before optimization \n degree= ${degree}$ and ${len(X)}$ data points")
+    visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
+    
+    print("Simulate Square shape \n")
+    results = compare3methods(Pc,T,X, max_iter=1000, constraint=True)
+
+    #optimized_control_points_SD = results["control_points"][2]
+    #visualize_data_curve_controlpoints(X, np.array([bspline_curve(optimized_control_points_SD, t, knots, degree) for t in t_vals]), optimized_control_points_SD)
+    """
+
+    #################################################
+    #                                               #
     #              NACA 0012 Airfoil                #
     #                                               #
     #################################################
@@ -345,10 +385,11 @@ if __name__ == "__main__":
     """
     # INITIALISATION
 
-    X = generate_circle_cloud_points(100, 0)
+    X = generate_circle_cloud_points(32, 0)
     #visualize_points(X)
-    Pc = np.array([[0.0, -1.0],[-1.0, -1.0],[-1.0,  1.0],[1.0,  1.0],[1.0, -1.0],[0.0, -1.0]])
-    degree = 2
+    #Pc = np.array([[0.0, -1.0],[-1.0, -1.0],[-1.0, 1.0],[1.0, 1.0],[1.0, -1.0],[0.0, -1.0]])
+    Pc = np.array([[-0.5, -0.7],[-0.8, -0.4],[-0.9, 0.0],[0.75, 1.25],[0.5, -0.7],[0.0, -0.8],[-0.5, -0.7]])
+    degree = 3
     n = len(Pc)
     # knot size = nb_ctrlpts + degree + 1
     knots = np.arange(n - degree + 1) / (n -degree)
@@ -370,7 +411,7 @@ if __name__ == "__main__":
     visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, footpoints_on_the_curve, Pc)
     
     print("Simulate Circle shape \n")
-    results = compare3methods(Pc,T,X, max_iter=50)
+    results = compare3methods(Pc,T,X, max_iter=500)
 
     #optimized_control_points_SD = results["control_points"][2]
     #visualize_data_curve_controlpoints(X, np.array([bspline_curve(optimized_control_points_SD, t, knots, degree) for t in t_vals]), optimized_control_points_SD)

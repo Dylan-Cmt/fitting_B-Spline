@@ -49,7 +49,7 @@ def err_PD(t, Xk, control_points, knots, degree):
 # output:
 #   - first derivative of the error
 ##
-def err_PD_prime(t, Xk, control_points, knots, degree):
+def err_PD_prim(t, Xk, control_points, knots, degree):
     P_t = cv.bspline_curve(control_points, t, knots, degree)
     P_t_prime = cv.dt_bspline_curve(control_points, t, knots, degree)
     return 2 * np.dot(P_t - Xk, P_t_prime)
@@ -98,13 +98,13 @@ def err_PD_primprim(t, Xk, control_points, knots, degree):
 # output:
 #   - optimized parameter tk
 ##
-def newton_tk(Xk, control_points, knots, degree, initial_guess,tol=1e-6, max_iter=100):
+def newton_tk(err_prim, err_primprim, Xk, control_points, knots, degree, initial_guess,tol=1e-6, max_iter=100):
     t_min = knots[degree]
     t_max = knots[-(degree + 1)]
     t = np.clip(initial_guess, t_min + 1e-8, t_max - 1e-8)
     for _ in range(max_iter):
-        Fp  = err_PD_prime(t, Xk, control_points, knots, degree)
-        Fpp = err_PD_primprim(t, Xk, control_points, knots, degree)
+        Fp  = err_prim(t, Xk, control_points, knots, degree)
+        Fpp = err_primprim(t, Xk, control_points, knots, degree)
         if abs(Fpp) < 1e-14:
             break
         t_new = np.clip(t - Fp / Fpp, t_min + 1e-8, t_max - 1e-8)
@@ -148,7 +148,7 @@ def all_tk(X, control_points, knots, degree, initial_guesses=None, n_samples=50)
             initial_guesses.append(t_samples[np.argmin(dists)])
     # Next iterations
     # previous tk values are reused
-    return [newton_tk(Xk, control_points, knots, degree, t0) for Xk, t0 in zip(X, initial_guesses)]
+    return [newton_tk(err_PD_prim, err_PD_primprim, Xk, control_points, knots, degree, t0) for Xk, t0 in zip(X, initial_guesses)]
 
 
 ##
@@ -266,21 +266,22 @@ def dP_f_PD(P, T, knots, degree, X):
     return grad_P
 
 
-"""
+
 ##
 # function: phi_PD
 #
 # description:
 #   Evaluates the line-search function phi
-#   used in the Tangent Distance Minimization (PDM).
-#   This function is not explicitly used, but
+#   used in the Point Distance Minimization (PDM).
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_PD(alpha, P, T, knots, degree, X):
     D = -dP_f_PD(P, T, knots, degree, X)
     return f_PD(P + alpha * D, T, knots, degree, X)
-"""
+
 
 
 ##
@@ -391,8 +392,9 @@ def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         P += alpha * D
         if constraint:
             # constraints can be modified in need
-            P[0] = P0[0]
-            P[-1] = P0[-1]
+            #P[0] = P0[0]
+            #P[-1] = P0[-1]
+            P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error
 
@@ -485,21 +487,22 @@ def dP_f_TD(P, T, knots, degree, X):
     return grad_P
 
 
-"""
+
 ##
 # function: phi_TD
 #
 # description:
 #   Evaluates the line-search function phi
 #   used in the Tangent Distance Minimization (TDM).
-#   This function is not explicitly used, but
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_TD(alpha, P, T, knots, degree, X):
     D = -dP_f_TD(P, T, knots, degree, X)
     return f_TD(P + alpha * D, T, knots, degree, X)
-"""
+
 
 
 ##
@@ -612,8 +615,9 @@ def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         P += alpha * D
         if constraint:
             # constraints can be modified in need
-            P[0] = P0[0]
-            P[-1] = P0[-1]
+            #P[0] = P0[0]
+            #P[-1] = P0[-1]
+            P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error
 
@@ -764,21 +768,22 @@ def dP_f_SD(P, T, knots, degree, X):
     return grad_P
 
 
-"""
+
 ##
 # function: phi_SD
 #
 # description:
 #   Evaluates the line-search function phi
 #   used in the Squared Distance Minimization (SDM).
-#   This function is not explicitly used, but
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_SD(alpha, P, T, knots, degree, X):
     D = -dP_f_SD(P, T, knots, degree, X)
     return f_SD(P + alpha * D, T, knots, degree, X)
-"""
+
 
 
 ##
@@ -914,7 +919,8 @@ def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         P += alpha * D
         if constraint:
             # constraints can be modified in need
-            P[0] = P0[0]
-            P[-1] = P0[-1]
+            #P[0] = P0[0]
+            #P[-1] = P0[-1]
+            P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error

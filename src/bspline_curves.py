@@ -59,6 +59,8 @@ def bspline_basis(i, degree, t, knots):
 #   - value of the first derivative N'_{i,p}(t)
 ##
 def dt_bspline_basis(i, degree, t, knots): # cf p59 du NURBS BOOK
+    if degree <= 0:
+        return 0.0
     first_part, second_part = 0.0, 0.0
     denom1 = knots[i + degree] - knots[i]
     if denom1 != 0:
@@ -68,7 +70,7 @@ def dt_bspline_basis(i, degree, t, knots): # cf p59 du NURBS BOOK
         second_part = degree / denom2 * bspline_basis(i + 1, degree - 1, t, knots)
     return first_part - second_part
 
-
+##
 # function: dtt_bspline_basis
 #
 # description:
@@ -87,6 +89,8 @@ def dt_bspline_basis(i, degree, t, knots): # cf p59 du NURBS BOOK
 #     N''_{i,p}(t)
 ##
 def dtt_bspline_basis(i, degree, t, knots): # cf p62 du NURBS BOOK
+    if degree <= 1:
+        return 0.0
     first_part, second_part, third_part = 0.0, 0.0, 0.0
 
     # N_{i, p-2}
@@ -211,6 +215,8 @@ def dtt_bspline_curve(P, t, knots, degree):
 #   - unit tangent vector
 ##
 def unit_tangent(control_points, t, knots, degree):
+    if degree < 1:
+        raise ValueError("Invalid B-spline degree: tangent computation requires degree >= 1.")
     tangent = dt_bspline_curve(control_points, t, knots, degree)
     epsilon = 1e-12
     return np.asarray(tangent / (np.linalg.norm(tangent) + epsilon), dtype=float)
@@ -254,13 +260,18 @@ def unit_normal(control_points, t, knots, degree):
 #   - curvature value
 ##
 def curvature2D(control_points , t, knots, degree):
-    P_t_prime = dt_bspline_curve(control_points, t, knots, degree)
-    P_t_second = dtt_bspline_curve(control_points, t, knots, degree)
-    denom = np.linalg.norm(P_t_prime)**3
-    if (denom < 1e-12):
-        return 1e12
-    num = np.linalg.det(np.vstack((P_t_prime,P_t_second)))
-    return abs(num) / denom
+    if degree <= 0:
+        raise ValueError("Curvature is undefined for B-splines with null degree.")
+    elif degree == 1:
+        return 1e-12
+    else:
+        P_t_prime = dt_bspline_curve(control_points, t, knots, degree)
+        P_t_second = dtt_bspline_curve(control_points, t, knots, degree)
+        denom = np.linalg.norm(P_t_prime)**3
+        if (denom < 1e-12):
+            return 1e12
+        num = np.linalg.det(np.vstack((P_t_prime,P_t_second)))
+        return abs(num) / denom
 
 
 ##
@@ -279,9 +290,12 @@ def curvature2D(control_points , t, knots, degree):
 #   - curvature radius
 ##
 def curvature_radius(control_points, t, knots, degree):
-    K = curvature2D(control_points, t, knots, degree)
-    if (K < 1e-12):
+    if degree == 1:
         return 1e12
-    elif(K >= 1e12):
-        return 0
-    return 1/K
+    else:
+        K = curvature2D(control_points, t, knots, degree)
+        if (K < 1e-12):
+            return 1e12
+        elif(K >= 1e12):
+            return 0
+        return 1/K

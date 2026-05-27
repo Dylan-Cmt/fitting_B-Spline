@@ -43,6 +43,27 @@ def generate_square_cloud_points(num_points, noise_level=0):
         points.append((x, y))
     return points
 
+# Generate points along the edges of a closed square with noise
+def generate_closed_square_cloud_points(num_points, noise_level=0):
+    corners = [(0,0), (0,1), (1,1), (1,0)]
+    pts = []
+    for k in range(num_points):
+        if k < 4:
+            x, y = corners[k]
+        else:
+            s = (k - 4) % 4
+            t = ((k - 4) // 4 + 1) / ((num_points - 4) // 4 + 2)
+
+            if s == 0:   x, y = 0, t       # left
+            elif s == 1: x, y = t, 1       # top
+            elif s == 2: x, y = 1, 1 - t   # right
+            else:        x, y = 1 - t, 0   # bottom
+        pts.append((
+            x + rd.uniform(-noise_level, noise_level),
+            y + rd.uniform(-noise_level, noise_level)
+        ))
+    return pts
+
 # Generate random C shaped cloud points with noise with radius 1 and center at (0, 0)
 def generate_c_cloud_points(num_points, noise_level=0):
     points = []
