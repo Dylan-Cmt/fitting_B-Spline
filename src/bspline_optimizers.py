@@ -266,21 +266,22 @@ def dP_f_PD(P, T, knots, degree, X):
     return grad_P
 
 
-"""
+
 ##
 # function: phi_PD
 #
 # description:
 #   Evaluates the line-search function phi
-#   used in the Tangent Distance Minimization (PDM).
-#   This function is not explicitly used, but
+#   used in the Point Distance Minimization (PDM).
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_PD(alpha, P, T, knots, degree, X):
     D = -dP_f_PD(P, T, knots, degree, X)
     return f_PD(P + alpha * D, T, knots, degree, X)
-"""
+
 
 
 ##
@@ -486,21 +487,22 @@ def dP_f_TD(P, T, knots, degree, X):
     return grad_P
 
 
-"""
+
 ##
 # function: phi_TD
 #
 # description:
 #   Evaluates the line-search function phi
 #   used in the Tangent Distance Minimization (TDM).
-#   This function is not explicitly used, but
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_TD(alpha, P, T, knots, degree, X):
     D = -dP_f_TD(P, T, knots, degree, X)
     return f_TD(P + alpha * D, T, knots, degree, X)
-"""
+
 
 
 ##
@@ -766,21 +768,22 @@ def dP_f_SD(P, T, knots, degree, X):
     return grad_P
 
 
-"""
+
 ##
 # function: phi_SD
 #
 # description:
 #   Evaluates the line-search function phi
 #   used in the Squared Distance Minimization (SDM).
-#   This function is not explicitly used, but
+#   This function is not explicitly used here, but
 #   its derivatives are required for the
 #   Newton line-search procedure.
+#   The function is used in the testing file
 ##
 def phi_SD(alpha, P, T, knots, degree, X):
     D = -dP_f_SD(P, T, knots, degree, X)
     return f_SD(P + alpha * D, T, knots, degree, X)
-"""
+
 
 
 ##
