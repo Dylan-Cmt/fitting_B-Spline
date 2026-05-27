@@ -49,7 +49,7 @@ def err_PD(t, Xk, control_points, knots, degree):
 # output:
 #   - first derivative of the error
 ##
-def err_PD_prime(t, Xk, control_points, knots, degree):
+def err_PD_prim(t, Xk, control_points, knots, degree):
     P_t = cv.bspline_curve(control_points, t, knots, degree)
     P_t_prime = cv.dt_bspline_curve(control_points, t, knots, degree)
     return 2 * np.dot(P_t - Xk, P_t_prime)
@@ -98,13 +98,13 @@ def err_PD_primprim(t, Xk, control_points, knots, degree):
 # output:
 #   - optimized parameter tk
 ##
-def newton_tk(Xk, control_points, knots, degree, initial_guess,tol=1e-6, max_iter=100):
+def newton_tk(err_prim, err_primprim, Xk, control_points, knots, degree, initial_guess,tol=1e-6, max_iter=100):
     t_min = knots[degree]
     t_max = knots[-(degree + 1)]
     t = np.clip(initial_guess, t_min + 1e-8, t_max - 1e-8)
     for _ in range(max_iter):
-        Fp  = err_PD_prime(t, Xk, control_points, knots, degree)
-        Fpp = err_PD_primprim(t, Xk, control_points, knots, degree)
+        Fp  = err_prim(t, Xk, control_points, knots, degree)
+        Fpp = err_primprim(t, Xk, control_points, knots, degree)
         if abs(Fpp) < 1e-14:
             break
         t_new = np.clip(t - Fp / Fpp, t_min + 1e-8, t_max - 1e-8)
@@ -148,7 +148,7 @@ def all_tk(X, control_points, knots, degree, initial_guesses=None, n_samples=50)
             initial_guesses.append(t_samples[np.argmin(dists)])
     # Next iterations
     # previous tk values are reused
-    return [newton_tk(Xk, control_points, knots, degree, t0) for Xk, t0 in zip(X, initial_guesses)]
+    return [newton_tk(err_PD_prim, err_PD_primprim, Xk, control_points, knots, degree, t0) for Xk, t0 in zip(X, initial_guesses)]
 
 
 ##
