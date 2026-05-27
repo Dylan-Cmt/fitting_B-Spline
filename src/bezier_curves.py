@@ -180,8 +180,6 @@ def unit_tangent(control_points, t):
 ##
 def unit_normal(control_points, t):
     degree = len(control_points) - 1
-    if degree < 1:
-        raise ValueError("Invalid Bézier degree: normal computation requires degree >= 1.")
     u_T = unit_tangent(control_points, t)
     return np.asarray([u_T[1], -u_T[0]], dtype=float)
 

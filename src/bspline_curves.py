@@ -240,8 +240,6 @@ def unit_tangent(control_points, t, knots, degree):
 #   - unit normal vector in 2D
 ##
 def unit_normal(control_points, t, knots, degree):
-    if degree < 1:
-        raise ValueError("Invalid B-spline degree: normal computation requires degree >= 1.")
     u_T = unit_tangent(control_points, t, knots, degree)
     return np.asarray([u_T[1], -u_T[0]], dtype=float)
 
@@ -292,9 +290,7 @@ def curvature2D(control_points , t, knots, degree):
 #   - curvature radius
 ##
 def curvature_radius(control_points, t, knots, degree):
-    if degree <= 0:
-        raise ValueError("Curvature radius is undefined for B-splines with null degree.")
-    elif degree == 1:
+    if degree == 1:
         return 1e12
     else:
         K = curvature2D(control_points, t, knots, degree)
