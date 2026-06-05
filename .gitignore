@@ -8,3 +8,5 @@ venv/
 .vscode/
 .pytest_cache/
 .DS_Store
+bezier_example.py
+bspline_example.py
