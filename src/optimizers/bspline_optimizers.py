@@ -372,7 +372,7 @@ def dd_phi_PD(alpha, P, T, knots, degree, X):
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
 ##
-def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=True):
+def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
@@ -390,10 +390,11 @@ def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         if alpha <= 0 or np.isnan(alpha):
             alpha = alpha0
         P += alpha * D
-        if constraint:
-            # constraints can be modified in need
-            #P[0] = P0[0]
-            #P[-1] = P0[-1]
+        # constraints can be modified in need
+        if constraint=="opened":
+            P[0] = P0[0]
+            P[-1] = P0[-1]
+        elif constraint=="closed":
             P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error
@@ -595,7 +596,7 @@ def dd_phi_TD(alpha, P, T, knots, degree, X):
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
 ##
-def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=True):
+def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
@@ -613,10 +614,11 @@ def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         if alpha <= 0 or np.isnan(alpha):
             alpha = alpha0
         P += alpha * D
-        if constraint:
-            # constraints can be modified in need
-            #P[0] = P0[0]
-            #P[-1] = P0[-1]
+        # constraints can be modified in need
+        if constraint=="opened":
+            P[0] = P0[0]
+            P[-1] = P0[-1]
+        elif constraint=="closed":
             P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error
@@ -899,7 +901,7 @@ def dd_phi_SD(alpha, P, T, knots, degree, X):
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
 ##
-def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=True):
+def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
@@ -917,10 +919,11 @@ def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         if alpha <= 0 or np.isnan(alpha):
             alpha = alpha0
         P += alpha * D
-        if constraint:
-            # constraints can be modified in need
-            #P[0] = P0[0]
-            #P[-1] = P0[-1]
+        # constraints can be modified in need
+        if constraint=="opened":
+            P[0] = P0[0]
+            P[-1] = P0[-1]
+        elif constraint=="closed":
             P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
     return P, log_iter, log_avg_error

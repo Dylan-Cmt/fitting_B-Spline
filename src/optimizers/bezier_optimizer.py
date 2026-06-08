@@ -344,7 +344,7 @@ def dd_phi_PD(alpha, P, T, X):
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
 ##
-def gradient_descent_PD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6, constraint=True):
+def gradient_descent_PD(P0,T0,X, alpha0=0.1,max_iter=100,tol=1e-6,constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
@@ -367,10 +367,12 @@ def gradient_descent_PD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6, constraint=Tru
             alpha = alpha0
         # Update control points
         P += alpha * D
-        if constraint:
-            # constraints can be modified in need
+        # constraints can be modified in need
+        if constraint=="opened":
             P[0] = P0[0]
             P[-1] = P0[-1]
+        elif constraint=="closed":
+            P[-1] = P[0]
         # Recompute footpoint parameters
         T = all_tk(X, P, initial_guesses=T)
     return P, log_iter, log_avg_error
@@ -553,7 +555,7 @@ def dd_phi_TD(alpha, P, T, X):
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
 ##
-def gradient_descent_TD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint=True):
+def gradient_descent_TD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
@@ -576,10 +578,12 @@ def gradient_descent_TD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint=True
             alpha = alpha0
         # Update control points
         P += alpha * D
-        if constraint:
-            # constraints can be modified in need
+        # constraints can be modified in need
+        if constraint=="opened":
             P[0] = P0[0]
             P[-1] = P0[-1]
+        elif constraint=="closed":
+            P[-1] = P[0]
         # Recompute footpoint parameters
         T = all_tk(X, P, initial_guesses=T)
     return P, log_iter, log_avg_error
@@ -837,7 +841,7 @@ def dd_phi_SD(alpha, P, T, X):
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
 ##
-def gradient_descent_SD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint=True):
+def gradient_descent_SD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
@@ -859,10 +863,12 @@ def gradient_descent_SD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint=True
             alpha = alpha0
         # Update control points
         P += alpha * D
-        if constraint:
-            # constraints can be modified in need
+        # constraints can be modified in need
+        if constraint=="opened":
             P[0] = P0[0]
             P[-1] = P0[-1]
+        elif constraint=="closed":
+            P[-1] = P[0]
         # Recompute footpoint parameters
         T = all_tk(X, P, initial_guesses=T)
     return P, log_iter, log_avg_error
