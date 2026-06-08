@@ -1,6 +1,6 @@
 import pytest
 from hypothesis import given, strategies as st
-from src.bspline_curves import *
+from src.optimizers.bspline_curves import *
 
 straight_curve = np.linspace(0,1,10)[:, np.newaxis]
 straight_curve = np.hstack((straight_curve, np.zeros_like(straight_curve)))

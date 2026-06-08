@@ -1,6 +1,6 @@
 import pytest
 from hypothesis import given, strategies as st
-from src.bezier_curves import *
+from src.optimizers.bezier_curves import *
 
 straight_curve =  np.array([[0.0, 0.0],[0.5, 0.0],[1.0, 0.0]])
 

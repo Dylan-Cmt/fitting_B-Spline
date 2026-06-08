@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 from hypothesis import given, strategies as st
-from src.bspline_curves import *
-from src.bspline_optimizers import *
+from src.optimizers.bspline_curves import *
+from src.optimizers.bspline_optimizers import *
 
 straight_curve = np.array([[0.0, 0.0], [0.5, 0.0], [1.0, 0.0]])
 degree = 1
