@@ -1,6 +1,6 @@
 # Fitting B-Spline
 
-A robust and efficient implementation for fitting B-Spline [curves / surfaces] to discrete data points using [Least-Squares Optimization / Interpolation / Regression]. This project provides tools to convert noisy or scattered spatial data points into smooth, parametric B-Spline representations.
+A robust and efficient implementation for fitting curves to discrete data points using PDM/TDM/SDM.
 
 ## Table of Contents
 - [Installation](#installation)
