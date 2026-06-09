@@ -197,6 +197,14 @@ def newton_alpha(d_phi_func,dd_phi_func,P,T,X,alpha0,tol=1e-6,max_iter=100):
 def avg_error(P, T, X):
     return np.sqrt(2 * f_PD(P, T, X) / len(X))
 
+def max_error(P, T, X):
+    max_err = 0.0
+    for tk, Xk in zip(T, X):
+        d = np.linalg.norm(cv.eval_bezier_curve(P, tk) - Xk)
+        if d > max_err:
+            max_err = d
+    return max_err
+
 #################################################
 #                                               #
 #                      PDM                      #
@@ -348,10 +356,12 @@ def gradient_descent_PD(P0,T0,X, alpha0=0.1,max_iter=100,tol=1e-6,constraint="op
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
+    log_max_error = []
     log_iter = []
     for i in range(max_iter):
         log_iter.append(np.log10(i + 1))
         log_avg_error.append(np.log10(avg_error(P, T, X)))
+        log_max_error.append(np.log10(max_error(P, T, X)))
         grad_P = dP_f_PD(P, T, X)
         norm_grad = np.linalg.norm(grad_P)
         # Convergence test
@@ -375,7 +385,7 @@ def gradient_descent_PD(P0,T0,X, alpha0=0.1,max_iter=100,tol=1e-6,constraint="op
             P[-1] = P[0]
         # Recompute footpoint parameters
         T = all_tk(X, P, initial_guesses=T)
-    return P, log_iter, log_avg_error
+    return P, log_iter, log_avg_error, log_max_error
 
 #################################################
 #                                               #
@@ -559,10 +569,12 @@ def gradient_descent_TD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint="ope
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
+    log_max_error = []
     log_iter = []
     for i in range(max_iter):
         log_iter.append(np.log10(i + 1))
         log_avg_error.append(np.log10(avg_error(P, T, X)))
+        log_max_error.append(np.log10(max_error(P, T, X)))
         grad_P = dP_f_TD(P, T, X)
         norm_grad = np.linalg.norm(grad_P)
         # Convergence test
@@ -586,7 +598,7 @@ def gradient_descent_TD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint="ope
             P[-1] = P[0]
         # Recompute footpoint parameters
         T = all_tk(X, P, initial_guesses=T)
-    return P, log_iter, log_avg_error
+    return P, log_iter, log_avg_error, log_max_error
 
 
 #################################################
@@ -845,10 +857,12 @@ def gradient_descent_SD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint="ope
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
+    log_max_error = []
     log_iter = []
     for i in range(max_iter):
         log_iter.append(np.log10(i + 1))
         log_avg_error.append(np.log10(avg_error(P, T, X)))
+        log_max_error.append(np.log10(max_error(P, T, X)))
         grad_P = dP_f_SD(P, T, X)
         norm_grad = np.linalg.norm(grad_P)
         # Convergence test
@@ -871,4 +885,4 @@ def gradient_descent_SD(P0,T0,X,alpha0=0.1,max_iter=100,tol=1e-6,constraint="ope
             P[-1] = P[0]
         # Recompute footpoint parameters
         T = all_tk(X, P, initial_guesses=T)
-    return P, log_iter, log_avg_error
+    return P, log_iter, log_avg_error, log_max_error
