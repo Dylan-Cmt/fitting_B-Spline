@@ -207,6 +207,14 @@ def newton_alpha(d_phi_func, dd_phi_func, P, T, knots, degree, X, alpha0, tol=1e
 def avg_error(P, T, knots, degree, X):
     return np.sqrt(2 * f_PD(P, T, knots, degree, X) / len(X))
 
+def max_error(P, T, knots, degree, X):
+    max_err = 0.0
+    for tk, Xk in zip(T, X):
+        d = np.linalg.norm(cv.bspline_curve(P, tk, knots, degree) - Xk)
+        if d > max_err:
+            max_err = d
+    return max_err
+
 
 #################################################
 #                                               #
@@ -376,10 +384,12 @@ def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
+    log_max_error = []
     log_iter = []
     for i in range(max_iter):
         log_iter.append(np.log10(i+1))
         log_avg_error.append(np.log10(avg_error(P, T, knots, degree, X)))
+        log_max_error.append(np.log10(max_error(P, T, knots, degree, X)))
         grad_P = dP_f_PD(P, T, knots, degree, X)
         norm_grad = np.linalg.norm(grad_P)
         if norm_grad < tol:
@@ -397,7 +407,7 @@ def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         elif constraint=="closed":
             P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
-    return P, log_iter, log_avg_error
+    return P, log_iter, log_avg_error, log_max_error
 
 
 #################################################
@@ -600,10 +610,12 @@ def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
+    log_max_error = []
     log_iter = []
     for i in range(max_iter):
         log_iter.append(np.log10(i+1))
         log_avg_error.append(np.log10(avg_error(P, T, knots, degree, X)))
+        log_max_error.append(np.log10(max_error(P, T, knots, degree, X)))
         grad_P = dP_f_TD(P, T, knots, degree, X)
         norm_grad = np.linalg.norm(grad_P)
         if norm_grad < tol:
@@ -621,7 +633,7 @@ def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         elif constraint=="closed":
             P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
-    return P, log_iter, log_avg_error
+    return P, log_iter, log_avg_error, log_max_error
 
 
 #################################################
@@ -905,10 +917,12 @@ def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
     P = np.asarray(P0, dtype=float).copy()
     T = np.asarray(T0, dtype=float).copy()
     log_avg_error = []
+    log_max_error = []
     log_iter = []
     for i in range(max_iter):
         log_iter.append(np.log10(i+1))
         log_avg_error.append(np.log10(avg_error(P, T, knots, degree, X)))
+        log_max_error.append(np.log10(max_error(P, T, knots, degree, X)))
         grad_P = dP_f_SD(P, T, knots, degree, X)
         norm_grad = np.linalg.norm(grad_P)
         if norm_grad < tol:
@@ -926,4 +940,4 @@ def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
         elif constraint=="closed":
             P[-1] = P[0]
         T = all_tk(X, P, knots, degree, initial_guesses=T)
-    return P, log_iter, log_avg_error
+    return P, log_iter, log_avg_error, log_max_error
