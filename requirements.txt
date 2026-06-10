@@ -1,4 +1,7 @@
-numpy
-matplotlib
-pytest
 hypothesis
+matplotlib
+numpy
+pandas
+pytest
+PyQt5
+torch
