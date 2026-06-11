@@ -379,6 +379,7 @@ def dd_phi_PD(alpha, P, T, knots, degree, X):
 #   - optimized control points
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
+#   - logarithm of maximum fitting errors
 ##
 def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
@@ -387,12 +388,13 @@ def gradient_descent_PD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
     log_max_error = []
     log_iter = []
     for i in range(max_iter):
+        max_err = np.log10(max_error(P, T, knots, degree, X))
         log_iter.append(np.log10(i+1))
         log_avg_error.append(np.log10(avg_error(P, T, knots, degree, X)))
-        log_max_error.append(np.log10(max_error(P, T, knots, degree, X)))
+        log_max_error.append(max_err)
         grad_P = dP_f_PD(P, T, knots, degree, X)
         norm_grad = np.linalg.norm(grad_P)
-        if norm_grad < tol:
+        if norm_grad < tol or max_err < np.log10(0.03):
             print(f"Convergence achieved after {i+1} iterations")
             break
         D = -grad_P
@@ -605,6 +607,7 @@ def dd_phi_TD(alpha, P, T, knots, degree, X):
 #   - optimized control points
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
+#   - logarithm of maximum fitting errors
 ##
 def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
@@ -613,12 +616,13 @@ def gradient_descent_TD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
     log_max_error = []
     log_iter = []
     for i in range(max_iter):
+        max_err = np.log10(max_error(P, T, knots, degree, X))
         log_iter.append(np.log10(i+1))
         log_avg_error.append(np.log10(avg_error(P, T, knots, degree, X)))
-        log_max_error.append(np.log10(max_error(P, T, knots, degree, X)))
+        log_max_error.append(max_err)
         grad_P = dP_f_TD(P, T, knots, degree, X)
         norm_grad = np.linalg.norm(grad_P)
-        if norm_grad < tol:
+        if norm_grad < tol or max_err < np.log10(0.03):
             print(f"Convergence achieved after {i+1} iterations")
             break
         D = -grad_P
@@ -912,6 +916,7 @@ def dd_phi_SD(alpha, P, T, knots, degree, X):
 #   - optimized control points
 #   - logarithm of iteration indices
 #   - logarithm of average fitting errors
+#   - logarithm of maximum fitting errors
 ##
 def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
     P = np.asarray(P0, dtype=float).copy()
@@ -920,12 +925,13 @@ def gradient_descent_SD(P0, T0, knots, degree, X, alpha0=0.1, max_iter=100, tol=
     log_max_error = []
     log_iter = []
     for i in range(max_iter):
+        max_err = np.log10(max_error(P, T, knots, degree, X))
         log_iter.append(np.log10(i+1))
         log_avg_error.append(np.log10(avg_error(P, T, knots, degree, X)))
-        log_max_error.append(np.log10(max_error(P, T, knots, degree, X)))
+        log_max_error.append(max_err)
         grad_P = dP_f_SD(P, T, knots, degree, X)
         norm_grad = np.linalg.norm(grad_P)
-        if norm_grad < tol:
+        if norm_grad < tol or max_err < np.log10(0.03):
             print(f"Convergence achieved after {i+1} iterations")
             break
         D = -grad_P
