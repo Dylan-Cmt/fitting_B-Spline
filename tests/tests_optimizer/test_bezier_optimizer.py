@@ -142,7 +142,7 @@ def test_avg_error():
     X = np.array([[1.0, 1.0], [0.0, 1.0]])
     T = np.array([1.0, 0.0])
     assert avg_error(P, T, X) == pytest.approx(1.0)
-a 
+
 def test_max_error():
     # Null error for data points on the curve
     X = np.array([[0.0, 0.0], [0.5, 0.0], [1.0, 0.0]])
