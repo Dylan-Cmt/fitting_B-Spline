@@ -26,7 +26,28 @@ dataset_old.extend(dataset)
 """
 dataset = []
 dataset_size = 10
-for _ in range(dataset_size):
+
+# Add "perfect" initial control point
+Pc = np.array([[0.0,0.0], [0.40730124, 1.3341823], [0.59266407, 1.33464567], [1.0, 0.0]])
+T = all_tk(X, Pc)
+start_time = time.time()
+optimized_control_points, tot_iter, logavg_error, logmax_error = gradient_descent_PD(Pc, T, X, max_iter=75)
+stopping_time = time.time()
+tot_time = stopping_time - start_time
+dataset.append({
+    "initial_control_points": torch.tensor(Pc, dtype=torch.float32),
+    "final_control_points": torch.tensor(
+        optimized_control_points,
+        dtype=torch.float32
+    ),
+    "log_avg_error": float(logavg_error[-1]), 
+    "log_max_error": float(logmax_error[-1]),
+    "function_type": "sinus",
+    "total_iterations": int(10**float(tot_iter[-1])),
+    "total_time": float(tot_time)
+})
+
+for _ in range(dataset_size-1):
 
     Pc = random_control_points_sorted(4)
 
