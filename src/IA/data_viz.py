@@ -17,7 +17,7 @@ def score(err, err_min=err_min, err_max=err_max):
     return (10**err_max - 10**err) / 10**err_max
 """
 
-"""
+
 for i in range(len(dataset)):
     Pc = dataset[i]["initial_control_points"].numpy()
     Popt = dataset[i]["final_control_points"].numpy()
@@ -40,5 +40,4 @@ for i in range(len(dataset)):
     plt.grid()
     plt.legend()
     plt.title(f'Total iterations: {dataset[i]["total_iterations"]} \n Total time: {dataset[i]["total_time"]:.4f} \n Avg log_error: {dataset[i]["log_avg_error"]:.4f} \n Max log_error: {dataset[i]["log_max_error"]:.4f} \n Score final à calculer')
-    plt.show()"""
-print([d["log_max_error"] for d in dataset])
+    plt.show()
