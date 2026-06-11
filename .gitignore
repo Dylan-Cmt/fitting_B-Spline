@@ -11,3 +11,4 @@ venv/
 bezier_example.py
 bspline_example.py
 example.py
+dataset.pt
