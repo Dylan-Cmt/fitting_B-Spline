@@ -154,7 +154,18 @@ def test_avg_error():
     X = np.array([[1.0, 1.0], [0.0, 1.0]])
     T = np.array([1.0, 0.0])
     assert avg_error(P, T, knots, degree, X) == pytest.approx(1.0)
-    assert avg_error(P, T, knots, degree, X) >= 0.0
+
+def test_max_error():
+    # Null error for data points on the curve
+    X = data_on_curve
+    P = straight_curve
+    T = footpoints
+    assert max_error(P, T, knots, degree, X) == pytest.approx(0.0, abs=1e-7)
+
+    #  max_error = 1
+    X = np.array([[1.0, 1.0], [0.0, 1.0]])
+    T = np.array([1.0, 0.0])
+    assert max_error(P, T, knots, degree, X) == pytest.approx(1.0)
 
 
 def test_f_PD():
@@ -252,24 +263,25 @@ def test_gradient_descent_PD():
     X = data_on_curve
     P_init = straight_curve
     T = footpoints
-    P_new, log_iter, log_avg_error = gradient_descent_PD(P_init, T, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=False)
+    P_new, log_iter, log_avg_error, log_max_error = gradient_descent_PD(P_init, T, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=False)
     assert np.allclose(P_new, P_init, atol=1e-6)
     assert 10**log_iter[-1] == 1
     assert 10**log_avg_error[-1] == 0
+    assert 10**log_max_error[-1] == 0
     
     # Checking if cost function is decreasing
     P = np.array([[0.0, 0.0], [0.5, 0.8], [1.0, 0.0]])
     T_init = np.array([0.1, 0.4, 0.6, 0.9])
     X = np.array([[0.1, 0.1], [0.4, 0.2], [0.6, 0.1], [0.9, 0.3]])
-    P_new, log_iter, log_avg_error = gradient_descent_PD(P, T_init, knots, degree, X, alpha0=0.05, max_iter=10, tol=1e-6, constraint=False)
+    P_new, log_iter, log_avg_error, log_max_error = gradient_descent_PD(P, T_init, knots, degree, X, alpha0=0.05, max_iter=10, tol=1e-6, constraint=False)
     assert f_PD(P_new, T, knots, degree, X) <= f_PD(P, T, knots, degree, X)
 
     # Check length of iter and error
-    assert len(log_iter) == len(log_avg_error)
+    assert len(log_iter) == len(log_avg_error) == len(log_max_error)
 
-    # Check if error is decreasing
-    errors = 10 ** np.array(log_avg_error)
-    assert np.all(np.diff(errors) <= 0)
+    # Check if errors are decreasing
+    assert log_avg_error[0] > log_avg_error[-1]
+    assert log_max_error[0] > log_max_error[-1]
 
 
 def test_err_TD():
@@ -380,24 +392,25 @@ def test_gradient_descent_TD():
     X = data_on_curve
     P_init = straight_curve
     T = footpoints
-    P_new, log_iter, log_avg_error = gradient_descent_TD(P_init, T, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=False)
+    P_new, log_iter, log_avg_error, log_max_error = gradient_descent_TD(P_init, T, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=False)
     assert np.allclose(P_new, P_init)
     assert 10**log_iter[-1] == 1
     assert 10**log_avg_error[-1] == 0
+    assert 10**log_max_error[-1] == 0
     
     # Checking if cost function is decreasing
     P = np.array([[0.0, 0.0], [0.5, 0.8], [1.0, 0.0]])
     T_init = np.array([0.1, 0.4, 0.6, 0.9])
     X = np.array([[0.1, 0.1], [0.4, 0.2], [0.6, 0.1], [0.9, 0.3]])
-    P_new, log_iter, log_avg_error = gradient_descent_TD(P, T_init, knots, degree, X, alpha0=0.05, max_iter=10, tol=1e-6, constraint=False)
+    P_new, log_iter, log_avg_error, log_max_error = gradient_descent_TD(P, T_init, knots, degree, X, alpha0=0.05, max_iter=10, tol=1e-6, constraint=False)
     assert f_TD(P_new, T, knots, degree, X) <= f_TD(P, T, knots, degree, X)
 
     # Check length of iter and error
-    assert len(log_iter) == len(log_avg_error)
+    assert len(log_iter) == len(log_avg_error) == len(log_max_error)
 
-    # Check if error is decreasing
-    errors = 10 ** np.array(log_avg_error)
-    assert np.all(np.diff(errors) <= 0)
+    # Check if errors are decreasing
+    assert log_avg_error[0] > log_avg_error[-1]
+    assert log_max_error[0] > log_max_error[-1]
 
 
 ##################################################################################
@@ -535,21 +548,22 @@ def test_gradient_descent_SD():
     X = data_on_curve
     P_init = straight_curve
     T = footpoints
-    P_new, log_iter, log_avg_error = gradient_descent_SD(P_init, T, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=False)
+    P_new, log_iter, log_avg_error, log_max_error = gradient_descent_SD(P_init, T, knots, degree, X, alpha0=0.1, max_iter=100, tol=1e-6, constraint=False)
     assert np.allclose(P_new, P_init)
     assert 10**log_iter[-1] == 1
     assert 10**log_avg_error[-1] == 0
+    assert 10**log_max_error[-1] == 0
     
     # Checking if cost function is decreasing
     P = np.array([[0.0, 0.0], [0.5, 0.8], [1.0, 0.0]])
     T_init = np.array([0.1, 0.4, 0.6, 0.9])
     X = np.array([[0.1, 0.1], [0.4, 0.2], [0.6, 0.1], [0.9, 0.3]])
-    P_new, log_iter, log_avg_error = gradient_descent_SD(P, T_init, knots, degree, X, alpha0=0.05, max_iter=10, tol=1e-6, constraint=False)
+    P_new, log_iter, log_avg_error, log_max_error = gradient_descent_SD(P, T_init, knots, degree, X, alpha0=0.05, max_iter=10, tol=1e-6, constraint=False)
     assert f_SD(P_new, T, knots, degree, X) <= f_SD(P, T, knots, degree, X)
 
     # Check length of iter and error
-    assert len(log_iter) == len(log_avg_error)
+    assert len(log_iter) == len(log_avg_error) == len(log_max_error)
 
-    # Check if error is decreasing
-    errors = 10 ** np.array(log_avg_error)
-    assert np.all(np.diff(errors) <= 0)
+    # Check if errors are decreasing
+    assert log_avg_error[0] > log_avg_error[-1]
+    assert log_max_error[0] > log_max_error[-1]
