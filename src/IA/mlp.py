@@ -16,7 +16,7 @@ class BezierDataset(Dataset):
         - initial_control_points : Pc used as initialisation (6, 2)
         - final_control_points   : Popt after optimisation (6, 2)  ← training target
     """
-    def __init__(self, path="dataset.pt"):
+    def __init__(self, path="dataset/dataset.pt"):
         raw = torch.load(path)
         self.X    = torch.stack([d["X"]                    for d in raw])  # (N, 100, 2)
         self.Pc   = torch.stack([d["initial_control_points"] for d in raw])  # (N, 6, 2)
@@ -73,12 +73,12 @@ class BezierInitNet(nn.Module):
 # ─────────────────────────────────────────────
 
 def train(
-    dataset_path: str = "dataset.pt",
+    dataset_path: str = "./datasets/dataset.pt",
     n_epochs:     int = 200,
     batch_size:   int = 16,
     lr:           float = 1e-3,
     val_split:    float = 0.2,
-    save_path:    str = "model.pt",
+    save_path:    str = "./src/IA/models/model.pt",
 ):
     # ── data ──────────────────────────────────
     dataset = BezierDataset(dataset_path)
@@ -142,9 +142,9 @@ def train(
     plt.title("Training curves")
     plt.legend()
     plt.tight_layout()
-    plt.savefig("loss_curves.png", dpi=150)
+    plt.savefig("./src/IA/curves_loss/loss_curves.png", dpi=150)
     plt.show()
-    print("Loss curves saved to loss_curves.png")
+    print("Loss curves saved to ./src/IA/curves_loss/loss_curves.png")
 
     return model, train_losses, val_losses
 
@@ -179,10 +179,10 @@ def predict(model: BezierInitNet, X: np.ndarray) -> np.ndarray:
 
 if __name__ == "__main__":
     model, train_losses, val_losses = train(
-        dataset_path = "dataset.pt",
+        dataset_path = "./src/IA/datasets/dataset.pt",
         n_epochs     = 100,
         batch_size   = 10,
         lr           = 1e-3,
         val_split    = 0.2,
-        save_path    = "model.pt",
+        save_path    = "./src/IA/models/test.pt",
     )
