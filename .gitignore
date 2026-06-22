@@ -8,12 +8,9 @@ venv/
 .vscode/
 .pytest_cache/
 .DS_Store
-*.png
-bezier_example.py
-bspline_example.py
-dataset10k6pts.pt
 example.py
 example_mlp.py
 curves_loss/
-models/
-predictions_images/
+src/IA/datasets/dataset*.pt
+src/IA/models/
+src/IA/predictions_images/
