@@ -4,7 +4,7 @@ from src.optimizers.bezier_curves import eval_bezier_curve
 from src.optimizers.cloud_points import generate_sinus_cloud_points
 import torch
 
-dataset = torch.load("dataset.pt")
+dataset = torch.load("src/IA/datasets/dataset.pt")
 
 
 for i in range(len(dataset)):
