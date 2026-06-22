@@ -8,7 +8,11 @@ venv/
 .vscode/
 .pytest_cache/
 .DS_Store
+*.png
 bezier_example.py
 bspline_example.py
+dataset10k6pts.pt
 example.py
-dataset.pt
+example_mlp.py
+model1k6pts.pt
+model10k6pts.pt
