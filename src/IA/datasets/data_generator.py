@@ -129,7 +129,7 @@ if __name__ == "__main__":
     """
     dataset = []
 
-    dataset_size = 10000
+    dataset_size = 10
     counter = 0
     count_1_iter = 0
 
@@ -156,10 +156,10 @@ if __name__ == "__main__":
         else:
             counter +=1
 
-    print(f"{counter / (counter+dataset_size) * 100:.2f}% curves reached max iterations")
+    print(f"{counter / (counter+dataset_size) * 100:.2f}% curves generated reached max iterations and were deleted")
     print(f"{count_1_iter / dataset_size * 100:.2f}% curves converged in 1 iteration")
 
     # 19.35% curves reached max iterations
     # >90.00% curves converged in 1 iteration
 
-    torch.save(dataset, "dataset.pt")
+    torch.save(dataset, "./src/IA/datasets/dataset.pt")
