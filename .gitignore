@@ -14,5 +14,6 @@ bspline_example.py
 dataset10k6pts.pt
 example.py
 example_mlp.py
-model1k6pts.pt
-model10k6pts.pt
+curves_loss/
+models/
+predictions_images/
