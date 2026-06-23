@@ -170,6 +170,15 @@ if __name__ == "__main__":
             total=dataset_size,
             )
         )
+    dataset = [
+        {
+            "X": torch.from_numpy(d["X"]),
+            "final_control_points": torch.from_numpy(
+                d["final_control_points"]
+            )
+        }
+        for d in dataset
+    ]
     end_time = time.time()
     print(f"Dataset generation took {end_time - start_time:.2f} seconds")
 
