@@ -1,10 +1,12 @@
-#import os
+import contextlib # used to ignore the outputs of the gradient descent function
 import numpy as np
+import os
 from src.optimizers.bezier_curves import eval_bezier_curve
 from src.optimizers.bezier_optimizer import *
 #from src.optimizers.cloud_points import *
 import torch
 import time
+from tqdm import tqdm # used to display a progress bar for the dataset generation
 
 ##
 # function: cross2d
@@ -117,6 +119,33 @@ def generate_noised_Bezier_data(control_points, n_points=100, noise_std=0.0):
     noise = np.random.normal(loc=0.0,scale=noise_std,size=curve.shape)
     return curve + noise
 
+##
+# function: generate_sample
+#
+# description:
+#   Generates a single sample of the dataset, consisting of a noisy Bézier curve
+#   and the optimized control points obtained from gradient descent.
+#
+# input:
+#   - _: placeholder for compatibility with parallel processing
+# output:
+#   - dictionary containing the noisy curve points and the optimized control points
+##
+def generate_sample(_):
+    Pc = random_control_points(3)
+    X = generate_noised_Bezier_data(Pc,n_points=100,noise_std=0.01)
+    T = all_tk(X, Pc)
+
+    max_iter = 100
+    # the two lines below are to avoid printing the output of the gradient descent function
+    with open(os.devnull, "w") as f:
+        with contextlib.redirect_stdout(f):
+            Popt, *_  = gradient_descent_PD(Pc,T,X, alpha0=0.1,max_iter=max_iter)
+    return {
+    "X": X.astype(np.float32),
+    "final_control_points": Popt.astype(np.float32)
+}
+
 if __name__ == "__main__":
     # start generating the dataset
     """
@@ -130,36 +159,16 @@ if __name__ == "__main__":
     dataset = []
 
     dataset_size = 10
-    counter = 0
-    count_1_iter = 0
+    
+    start_time = time.time()
+    
+    dataset = list(
+    tqdm(
+        map(generate_sample, range(dataset_size)),
+        total=dataset_size,
+        )
+    )
+    end_time = time.time()
+    print(f"Dataset generation took {end_time - start_time:.2f} seconds")
 
-    while len(dataset) < dataset_size:
-
-        Pc = random_control_points(6)
-        X = generate_noised_Bezier_data(Pc,n_points=100,noise_std=0.01)
-        #Pc[0] = X[0]
-        #Pc[-1] = X[-1]
-        T = all_tk(X, Pc)
-
-        max_iter = 10
-
-        Popt, log_iter, log_avg_error, log_max_error = gradient_descent_PD(Pc,T,X, alpha0=0.1,max_iter=max_iter)   
-        if int(10**log_iter[-1]) < max_iter//2: # we want a database of data that will converge in a reasonable time and iterations
-
-            dataset.append({
-                "X": torch.tensor(X,dtype=torch.float32),
-                "initial_control_points": torch.tensor(Pc,dtype=torch.float32),
-                "final_control_points": torch.tensor(Popt, dtype=torch.float32)
-            })
-            if int(10**log_iter[-1]) == 1:
-                count_1_iter += 1
-        else:
-            counter +=1
-
-    print(f"{counter / (counter+dataset_size) * 100:.2f}% curves generated reached max iterations and were deleted")
-    print(f"{count_1_iter / dataset_size * 100:.2f}% curves converged in 1 iteration")
-
-    # 19.35% curves reached max iterations
-    # >90.00% curves converged in 1 iteration
-
-    torch.save(dataset, "./src/IA/datasets/dataset.pt")
+    torch.save(dataset, "./src/IA/datasets/dataset10k3pts.pt")
