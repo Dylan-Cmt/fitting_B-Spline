@@ -1,4 +1,5 @@
 import contextlib # used to ignore the outputs of the gradient descent function
+from concurrent.futures import ProcessPoolExecutor # used to parallelize the dataset generation
 import numpy as np
 import os
 from src.optimizers.bezier_curves import eval_bezier_curve
@@ -162,12 +163,13 @@ if __name__ == "__main__":
     
     start_time = time.time()
     
-    dataset = list(
-    tqdm(
-        map(generate_sample, range(dataset_size)),
-        total=dataset_size,
+    with ProcessPoolExecutor(max_workers=4) as executor:
+        dataset = list(
+        tqdm(
+            executor.map(generate_sample, range(dataset_size)),
+            total=dataset_size,
+            )
         )
-    )
     end_time = time.time()
     print(f"Dataset generation took {end_time - start_time:.2f} seconds")
 
