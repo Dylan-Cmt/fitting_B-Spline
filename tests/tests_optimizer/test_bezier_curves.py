@@ -51,6 +51,44 @@ def test_eval_bezier_second_derivative(t):
     dtt_P = eval_bezier_second_derivative(Pc, t)
     assert dtt_P[0] == pytest.approx(1)
 
+def test_degree_elevate():
+    # null degree returns the same curve
+    Pc = np.random.uniform(0, 1, size=(1, 2))
+    elevated_Pc = degree_elevate(Pc)
+    assert np.allclose(elevated_Pc[-1], Pc[0])
+    assert elevated_Pc.shape[0] == Pc.shape[0] + 1
+
+    # degree elevation of a linear curve returns a quadratic curve
+    Pc = np.array([[0.0, 0.0], [1.0, 1.0]])
+    elevated_Pc = degree_elevate(Pc)
+    assert elevated_Pc.shape[0] == 3
+    assert np.allclose(elevated_Pc[0], Pc[0])
+    assert np.allclose(elevated_Pc[1], (Pc[0] + Pc[1]) / 2)
+    assert np.allclose(elevated_Pc[2], Pc[-1])
+
+def test_degree_elevate_multiple():
+    # compare all elements to Pc (null degree) and see if its all the same
+    Pc = np.random.uniform(0, 1, size=(1, 2))
+    for k in range(5):
+        elevated_Pc = degree_elevate_multiple(Pc, k)
+        for i in range(k):
+            assert np.allclose(elevated_Pc[i], Pc[0])
+        assert elevated_Pc.shape[0] == Pc.shape[0] + k
+
+    # degree elevation of a linear curve returns a quadratic curve
+    Pc = np.array([[0.0, 0.0], [1.0, 0.0]])
+    elevated_Pc = degree_elevate_multiple(Pc, 1)
+    assert elevated_Pc.shape[0] == 3
+    assert np.allclose(elevated_Pc[0], Pc[0])
+    assert np.allclose(elevated_Pc[1], (Pc[0] + Pc[1]) / 2)
+    assert np.allclose(elevated_Pc[2], Pc[-1])
+    elevated_2_Pc = degree_elevate_multiple(Pc, 2)
+    assert elevated_2_Pc.shape[0] == 4
+    assert np.allclose(elevated_2_Pc[0], Pc[0])
+    assert np.allclose(elevated_2_Pc[1], (Pc[0] * 2/3 + Pc[1]) * 1/3)
+    assert np.allclose(elevated_2_Pc[2], (Pc[0] * 1/3 + Pc[1]) * 2/3)
+    assert np.allclose(elevated_2_Pc[0], Pc[0])
+
 @given(t=st.floats(0, 1))
 def test_unit_tangent_norm(t):
     # unit property

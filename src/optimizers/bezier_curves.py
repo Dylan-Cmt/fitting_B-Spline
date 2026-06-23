@@ -140,6 +140,53 @@ def eval_bezier_second_derivative(control_points, t):
     D2 = (n - 1) * (D1[1:] - D1[:-1])
     return eval_bezier_curve(D2, t)
 
+##
+# function: degree_elevate
+#
+# description:
+#   Elevates the degree of a Bézier curve by one.
+#
+# input:
+#   - control_points : array of control points
+#
+# output:
+#   - array of control points for the elevated curve
+##
+def degree_elevate(control_points):
+    P = np.asarray(control_points, dtype=float)
+    n = len(P) - 1
+    if n < 0:
+        raise ValueError("Control points cannot be empty")
+    elif n == 0:
+        return np.array([P[0], P[0]])
+    # Degree elevation formula
+    new_control_points = np.zeros((n + 2, P.shape[1]))
+    new_control_points[0] = P[0]
+    new_control_points[-1] = P[-1]
+    for i in range(1, n + 1):
+        coeff = i / (n + 1)
+        new_control_points[i] = coeff * P[i - 1] + (1 - coeff) * P[i]
+    return new_control_points
+
+##
+# function: degree_elevate_multiple
+#
+# description:
+#   Elevates the degree of a Bézier curve by k.
+#
+# input:
+#   - control_points : array of control points
+#   - k : number of degree elevations
+#
+# output:
+#   - array of control points for the elevated curve
+##
+def degree_elevate_multiple(control_points, k):
+    P = np.asarray(control_points, dtype=float)
+    for _ in range(k):
+        P = degree_elevate(P)
+    return P
+
 
 ##
 # function: unit_tangent
