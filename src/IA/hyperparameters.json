@@ -1,0 +1,32 @@
+{
+  "dataset_path" : "./src/IA/datasets/dataset10k6pts_degree_elevation.pt",
+  "n_epochs"     : 60,
+  "batch_size"   : 20,
+  "lr"           : 1e-3,
+  "val_split"    : 0.2,
+  "save_path"    : "./src/IA/models/model10k6pts_degree_elevation.pt",
+  "loss_curves_name"  : "loss_curves10k6pts_degree_elevation",
+  "degree" : 5
+}
+
+{
+  "dataset_path" : "./src/IA/datasets/dataset10k6pts.pt",
+  "n_epochs"     : 60,
+  "batch_size"   : 20,
+  "lr"           : 1e-3,
+  "val_split"    : 0.2,
+  "save_path"    : "./src/IA/models/model10k6pts.pt",
+  "loss_curves_name"  : "loss_curves10k6pts",
+  "degree" : 5
+}
+
+{
+  "dataset_path" : "./src/IA/datasets/dataset10k3pts.pt",
+  "n_epochs"     : 20,
+  "batch_size"   : 10,
+  "lr"           : 1e-3,
+  "val_split"    : 0.2,
+  "save_path"    : "./src/IA/models/model10k3pts.pt",
+  "loss_curves_name"  : "loss_curves10k3pts",
+  "degree" : 2
+}
