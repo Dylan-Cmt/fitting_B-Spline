@@ -80,16 +80,16 @@ T = all_tk(X, Bz0.P)
 # 3bis. Plot the initial curve with(out) its foot points if you want to make sure it is well computed
 t_vals = np.linspace(0.0, 1.0, 100)
 unoptimized_curve = Bz0.eval(t_vals)
-visualize_data_curve_controlpoints(X, unoptimized_curve, Pc)
+visualize_data_curve_controlpoints(X, unoptimized_curve, Bz0.P)
 plt.title(
     f"Initial Bézier curve with foot points\n"
     f"degree = {Bz0.degree}, {len(X)} data points"
 )
-visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [Bz0.eval(t) for t in T], Pc)
+visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [Bz0.eval(t) for t in T], Bz0.P)
     
 # 4. Start optimization then create a new Bézier object
 start_time = time.time()
-optimized_control_points, tot_iter, log_avg_error, log_max_error = gradient_descent_PD(Pc, T, X, max_iter=75)
+optimized_control_points, tot_iter, log_avg_error, log_max_error = gradient_descent_PD(Bz0.P, T, X, max_iter=75)
 end_time = time.time()
 tot_time = end_time - start_time
 print(f"Optimization time for PDM: {tot_time:.2f} seconds")
