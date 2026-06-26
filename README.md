@@ -6,7 +6,7 @@ A robust and efficient implementation for fitting curves to discrete data points
 - [Installation](#installation)
 - [Features](#features)
 - [Project structure](#project-structure)
-- [Usage Examples](#usage-examples)
+- [Usage Example](#usage-example)
 
 ## Installation
 
@@ -16,8 +16,7 @@ Make sure you have Python 3.x installed.
 ### Dependencies
 Install the required packages/libraries:
 ```bash
-# Example if using Python
-pip install numpy matplotlib pytest hypothesis
+pip install -r requirements.txt
 ```
 
 ### Setup
@@ -40,6 +39,7 @@ cd fitting_B-Spline
 fitting_B-Spline/
 ├── src/
 │   ├── __init__.py
+│   ├── IA/                         # Coming soon
 │   └── optimizers/
 │       ├── bezier_curves.py        # Core Bézier representation (basis functions, evaluation)
 │       ├── bezier_optimizer.py     # Fitting algorithms (PDM, TDM, SDM)
