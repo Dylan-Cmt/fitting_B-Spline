@@ -54,44 +54,60 @@ fitting_B-Spline/
 └── README.md                       # Project overview and usage guidelines
 ```
 
-## Usage Examples
+## Usage Example
 
-Below is a quick start example demonstrating how to run the B-Spline fitting sequence:
+Below is a quick start example demonstrating how to run the Bézier fitting sequence:
 
 ```python
-from src.bezier_curves import *
-from src.cloud_points import *
-from src.visualizers import *
+from src.optimizers.curves import *
+from src.optimizers.bezier_optimizer import *
+#from src.optimizers.bspline_optimizers import *
+from src.optimizers.cloud_points import *
+from src.optimizers.visualizers import *
+import time
 
 # 1. Generate data points from the cloud_points file (you can also read a .txt file and convert it with the cloud_points_reader.py file)
 X = generate_sinus_cloud_points(50, 0) # 50 points without noise
 # X = np.asarray(cloud_points_reader("your_file.txt"))
 
-# 2. Initialize the curve with its data points (and more if it's a B-Spline)
+# 2. Initialize the curve with its control points (and more if it's a B-Spline)
 Pc = np.array([[0.0, 0.0], [0.3, 0.0], [0.8, 0.0], [1.0, 0.0]])
+Bz0 = BezierCurve(Pc)
 
 # 3. Search foot points of the initial curve before starting the optimization
-T = all_tk(X, Pc)
+T = all_tk(X, Bz0.P)
 
 # 3bis. Plot the initial curve with(out) its foot points if you want to make sure it is well computed
-unoptimized_curve = eval_bezier_curve(Pc, np.linspace(0.0, 1.0, 50))
+t_vals = np.linspace(0.0, 1.0, 100)
+unoptimized_curve = Bz0.eval(t_vals)
 visualize_data_curve_controlpoints(X, unoptimized_curve, Pc)
-plt.title(f"Initial Bezier curve with foot points before optimization \n degree= ${len(Pc)-1}$ and {len(X)}$ data points")
-visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [eval_bezier_curve(Pc,t) for t in T], Pc)
+plt.title(
+    f"Initial Bézier curve with foot points\n"
+    f"degree = {Bz0.degree}, {len(X)} data points"
+)
+visualize_data_curve_footpoints_controlpoints(X, unoptimized_curve, [Bz0.eval(t) for t in T], Pc)
     
-# 4. Start optimization
+# 4. Start optimization then create a new Bézier object
 start_time = time.time()
-optimized_control_points, tot_iter, avg_error = gradient_descent_PD(Pc, T, X, max_iter=100)
+optimized_control_points, tot_iter, log_avg_error, log_max_error = gradient_descent_PD(Pc, T, X, max_iter=75)
 end_time = time.time()
 tot_time = end_time - start_time
 print(f"Optimization time for PDM: {tot_time:.2f} seconds")
+Bz1 = BezierCurve(optimized_control_points)
 
 # 5. Plot the optimized curve
-optimized_curve = eval_bezier_curve(optimized_control_points, np.linspace(0.0, 1.0, 100))
-plt.title(f"Optimized curve achieved in ${tot_time:5f}$s with ${tot_iter[-1]}$ iterations\n degree= ${len(optimized_control_points)-1}$ and ${len(X)}$ data points")
-visualize_data_curve_controlpoints(X, optimized_curve,optimized_control_points)
+optimized_curve = Bz1.eval(t_vals)
+plt.title(
+    f"Optimized curve in {tot_time:.2f}s with {int(10**tot_iter[-1])} iterations\n"
+    f"degree = {Bz1.degree}, {len(X)} data points\n"
+    f"Max error = {float(10**log_max_error[-1])}"
+)
+visualize_data_curve_controlpoints(X, optimized_curve,Bz1.P)
 
 # 6. Plot the log mean error
-plt.title(f"Log mean error after ${tot_iter[-1]}$ iterations \n degree= ${len(optimized_control_points)-1}$ and ${len(X)}$ data points")
-visualize_error_convergence(tot_iter, avg_error)
+plt.title(
+    f"Log max error after {int(10**tot_iter[-1])} iterations\n"
+    f"degree = {Bz1.degree}, {len(X)} data points"
+)
+visualize_error_convergence(tot_iter, log_avg_error)
 ```
