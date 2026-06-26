@@ -12,5 +12,6 @@ example.py
 example_mlp.py
 curves_loss/
 src/IA/datasets/dataset*.pt
+src/IA/datasets/*.png
 src/IA/models/
 src/IA/predictions_images/
