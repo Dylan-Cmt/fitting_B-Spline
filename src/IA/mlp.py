@@ -33,12 +33,12 @@ class BezierDataset(Dataset):
 
 class BezierInitNet(nn.Module):
     """
-    MLP that predicts initial control points Pc from a point cloud X.
+    MLP that predicts optimized control points Popt from a point cloud X.
 
     Architecture:
-        input  : (batch, 100, 2)  →  flattened to (batch, 200)
-        hidden : 200 → 256 → ReLU → 128 → ReLU → 64 → ReLU
-        output : 64  → 12         →  reshaped to (batch, 6, 2)
+        input  : (batch, 100, 2)             →  flattened to (batch, 200)
+        hidden : 200 → 256 → ReLU            → 128 → ReLU → 64 → ReLU
+        output : 64  → n_control * 2         →  reshaped to (batch, 6, 2)
 
     No activation on the output layer: control point coordinates are
     unbounded real numbers, so we let the network output any value.
