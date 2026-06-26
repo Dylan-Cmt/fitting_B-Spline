@@ -240,7 +240,7 @@ class BezierCurve(Curve):
     ##
     def _bernstein_basis_vector(self, n, t):
         t = np.asarray(t, dtype=float)
-        return np.array([self._bernstein(i, n, t) for i in range(n + 1)])
+        return np.array([self._bernstein_basis(i, n, t) for i in range(n + 1)])
 
     ##
     # function: eval
@@ -266,11 +266,11 @@ class BezierCurve(Curve):
         t = np.asarray(t, dtype=float)
         n = self.degree
         if t.ndim == 0:
-            B = self._bernstein_vector(n, t)
+            B = self._bernstein_basis_vector(n, t)
             return B @ self.P
         curve = np.zeros((len(t), self.P.shape[1]))
         for idx, tt in enumerate(t):
-            B = self._bernstein_vector(n, tt)
+            B = self._bernstein_basis_vector(n, tt)
             curve[idx] = B @ self.P
         return curve
 
