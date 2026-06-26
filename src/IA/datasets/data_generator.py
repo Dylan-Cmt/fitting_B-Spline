@@ -2,7 +2,8 @@ import contextlib # used to ignore the outputs of the gradient descent function
 from concurrent.futures import ProcessPoolExecutor # used to parallelize the dataset generation
 import numpy as np
 import os
-from src.optimizers.bezier_curves import eval_bezier_curve
+import random
+from src.optimizers.bezier_curves import eval_bezier_curve, degree_elevate_multiple
 from src.optimizers.bezier_optimizer import *
 #from src.optimizers.cloud_points import *
 import torch
@@ -132,7 +133,7 @@ def generate_noised_Bezier_data(control_points, n_points=100, noise_std=0.0):
 # output:
 #   - dictionary containing the noisy curve points and the optimized control points
 ##
-def generate_sample(_):
+"""def generate_sample(_):
     Pc = random_control_points(3)
     X = generate_noised_Bezier_data(Pc,n_points=100,noise_std=0.01)
     T = all_tk(X, Pc)
@@ -145,7 +146,25 @@ def generate_sample(_):
     return {
     "X": X.astype(np.float32),
     "final_control_points": Popt.astype(np.float32)
-}
+}"""
+
+def generate_sample(_):
+    degree = random.randint(2, 5)
+    Pc = random_control_points(degree + 1)
+    X = generate_noised_Bezier_data(Pc,n_points=100,noise_std=0.01)
+    T = all_tk(X, Pc)
+
+    max_iter = 30000
+
+    with open(os.devnull, "w") as f:
+        with contextlib.redirect_stdout(f):
+            Popt, *_ = gradient_descent_PD(Pc,T,X,alpha0=0.1, max_iter=max_iter)
+    if degree < 5:
+        Popt = degree_elevate_multiple(Popt, 5 - degree)
+    return {
+        "X": X.astype(np.float32),
+        "final_control_points": Popt.astype(np.float32)
+    }
 
 if __name__ == "__main__":
     # start generating the dataset
@@ -159,7 +178,7 @@ if __name__ == "__main__":
     """
     dataset = []
 
-    dataset_size = 10
+    dataset_size = 10000
     
     start_time = time.time()
     
@@ -182,4 +201,4 @@ if __name__ == "__main__":
     end_time = time.time()
     print(f"Dataset generation took {end_time - start_time:.2f} seconds")
 
-    torch.save(dataset, "./src/IA/datasets/dataset10k3pts.pt")
+    torch.save(dataset, "./src/IA/datasets/bigdataset.pt")
