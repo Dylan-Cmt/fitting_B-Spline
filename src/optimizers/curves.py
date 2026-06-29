@@ -398,7 +398,7 @@ class BSplineCurve(Curve):
             raise ValueError("Control points cannot be empty")
 
     ##
-    # function: _bspline_basis
+    # function: bspline_basis
     #
     # description:
     #   Computes the B-spline basis function N_{i,p}(t) recursively
@@ -412,7 +412,7 @@ class BSplineCurve(Curve):
     # output:
     #   - basis function value N_{i,p}(t)
     ##
-    def _bspline_basis(self, i, p, t):
+    def bspline_basis(self, i, p, t):
         knots = self.knots
         n = len(knots) - 1
         if p == 0:
@@ -423,11 +423,11 @@ class BSplineCurve(Curve):
         if (i + p) < n:
             denom1 = knots[i + p] - knots[i]
             if denom1 != 0:
-                first = (t - knots[i]) / denom1 * self._bspline_basis(i, p - 1, t)
+                first = (t - knots[i]) / denom1 * self.bspline_basis(i, p - 1, t)
         if (i + p + 1) < n:
             denom2 = knots[i + p + 1] - knots[i + 1]
             if denom2 != 0:
-                second = (knots[i + p + 1] - t) / denom2 * self._bspline_basis(i + 1, p - 1, t)
+                second = (knots[i + p + 1] - t) / denom2 * self.bspline_basis(i + 1, p - 1, t)
         return first + second
 
     ##
@@ -451,10 +451,10 @@ class BSplineCurve(Curve):
         first, second = 0.0, 0.0
         denom1 = knots[i + p] - knots[i]
         if denom1 != 0:
-            first = p / denom1 * self._bspline_basis(i, p - 1, t)
+            first = p / denom1 * self.bspline_basis(i, p - 1, t)
         denom2 = knots[i + p + 1] - knots[i + 1]
         if denom2 != 0:
-            second = p / denom2 * self._bspline_basis(i + 1, p - 1, t)
+            second = p / denom2 * self.bspline_basis(i + 1, p - 1, t)
         return first - second
     
     ##
@@ -478,7 +478,7 @@ class BSplineCurve(Curve):
         first, second, third = 0.0, 0.0, 0.0
         denom1 = (knots[i + p] - knots[i]) * (knots[i + p - 1] - knots[i])
         if denom1 != 0:
-            first = p * (p - 1) / denom1 * self._bspline_basis(i, p - 2, t)
+            first = p * (p - 1) / denom1 * self.bspline_basis(i, p - 2, t)
         denom2a = (knots[i + p] - knots[i]) * (knots[i + p] - knots[i + 1])
         denom2b = (knots[i + p + 1] - knots[i + 1]) * (knots[i + p] - knots[i + 1])
         coeff2 = 0.0
@@ -486,10 +486,10 @@ class BSplineCurve(Curve):
             coeff2 += 1.0 / denom2a
         if denom2b != 0:
             coeff2 += 1.0 / denom2b
-        second = p * (p - 1) * coeff2 * self._bspline_basis(i + 1, p - 2, t)
+        second = p * (p - 1) * coeff2 * self.bspline_basis(i + 1, p - 2, t)
         denom3 = (knots[i + p + 1] - knots[i + 1]) * (knots[i + p + 1] - knots[i + 2])
         if denom3 != 0:
-            third = p * (p - 1) / denom3 * self._bspline_basis(i + 2, p - 2, t)
+            third = p * (p - 1) / denom3 * self.bspline_basis(i + 2, p - 2, t)
         return first - second + third
 
     ##
