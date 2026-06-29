@@ -197,7 +197,7 @@ class BezierCurve(Curve):
         self.degree = len(self.P) - 1
 
     ##
-    # function: _bernstein_basis
+    # function: bernstein_basis
     #
     # description:
     #   Computes a Bernstein basis polynomial:
@@ -215,7 +215,7 @@ class BezierCurve(Curve):
     # errors:
     #   - ValueError if n < 0
     ##
-    def _bernstein_basis(self, i, n, t):
+    def bernstein_basis(self, i, n, t):
         if n < 0:
             raise ValueError("Bezier degree must be non-negative")
         if i < 0 or i > n:
@@ -240,7 +240,7 @@ class BezierCurve(Curve):
     ##
     def _bernstein_basis_vector(self, n, t):
         t = np.asarray(t, dtype=float)
-        return np.array([self._bernstein_basis(i, n, t) for i in range(n + 1)])
+        return np.array([self.bernstein_basis(i, n, t) for i in range(n + 1)])
 
     ##
     # function: eval
@@ -363,7 +363,7 @@ class BezierCurve(Curve):
     def degree_elevate_multiple(self, k):
         P = np.asarray(self.P, dtype=float)
         for _ in range(k):
-            P = self.degree_elevate(P)
+            P = BezierCurve(P).degree_elevate()
         return P
 
 ##
