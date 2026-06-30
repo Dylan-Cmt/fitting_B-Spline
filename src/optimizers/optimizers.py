@@ -431,3 +431,232 @@ class PDM(Optimizers):
             # Recompute footpoint parameters
             T = opt_pdm.all_tk(X, initial_guesses=T)
         return opt_pdm.curve.P, log_iter, log_avg_error, log_max_error
+    
+class TDM(Optimizers):
+
+    ##
+    # function: err_TD
+    #
+    # description:
+    #   Computes the Tangent Distance (TD) error
+    #   between a curve point P(t) and a data
+    #   point Xk.
+    #
+    # input:
+    #   - Xk : data point
+    #   - t : parameter value
+    #
+    # output:
+    #   - tangent distance error
+    ##
+    def err_TD(self, Xk, t):
+        P_t = self.curve.eval(t)
+        n = self.curve.unit_normal(t)
+        return np.dot(P_t - Xk, n) ** 2  
+
+    ##
+    # function: f_TD
+    #
+    # description:
+    #   Computes the global Tangent Distance Minimization
+    #   (TDM) objective function.
+    #
+    # input:
+    #   - X : data points
+    #   - T : parameter values
+    #
+    # output:
+    #   - TDM objective function value
+    ##
+    def f_TD(self, X, T):
+        return 0.5 * sum(self.err_TD(X[k], T[k]) for k in range(len(T)))
+
+    ##
+    # function: dP_f_TD
+    #
+    # description:
+    #   Computes the gradient of the TDM objective
+    #   function with respect to the control points.
+    #
+    # input:
+    #   - X : data points
+    #   - T : parameter values
+    #
+    # output:
+    #   - gradient matrix
+    ##
+    def dP_f_TD(self, X, T):
+        m = self.curve.P.shape[0]
+        grad_P = np.zeros_like(self.curve.P)
+
+        for k in range(len(T)):
+            diff = self.curve.eval(T[k]) - X[k]
+            n_k = self.curve.unit_normal(T[k])
+            d_proj = np.dot(n_k, diff)
+            for i in range(m):
+                if isinstance(self.curve, BezierCurve):
+                    B_ik = self.curve.bernstein_basis(i, self.curve.degree, T[k])
+                elif isinstance(self.curve, BSplineCurve):
+                    B_ik = self.curve.bspline_basis(i, self.curve.degree, T[k])
+                grad_P[i] += d_proj * B_ik * n_k
+        return grad_P
+
+    ##
+    # function: phi_TD
+    #
+    # description:
+    #   Evaluates the line-search function phi
+    #   used in the Tangent Distance Minimization (TDM).
+    #
+    # input:
+    #   - alpha : step size
+    #   - X : data points
+    #   - T : parameter values
+    #
+    # output:
+    #   - phi value
+    ##
+    def phi_TD(self, alpha, X, T):
+        D = -self.dP_f_TD(X, T)
+        if isinstance(self.curve, BezierCurve):
+            temp_curve = BezierCurve(self.curve.P + alpha * D)
+        elif isinstance(self.curve, BSplineCurve):
+            temp_curve = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
+        temp_tdm = TDM(temp_curve)
+        return temp_tdm.f_TD(X, T)
+
+    ##
+    # function: d_phi_TD
+    #
+    # description:
+    #   Computes the first derivative of the
+    #   line-search function phi for TDM.
+    #
+    # input:
+    #   - alpha : step size
+    #   - X : data points
+    #   - T : parameter values
+    #
+    # output:
+    #   - first derivative of phi
+    ##
+    def d_phi_TD(self, alpha, X, T):
+        D = -self.dP_f_TD(X, T)
+        dphi = 0.0
+        if isinstance(self.curve, BezierCurve):
+            temp_curve1 = BezierCurve(self.curve.P + alpha * D)
+            temp_curve2 = BezierCurve(D)
+        elif isinstance(self.curve, BSplineCurve):
+            temp_curve1 = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
+            temp_curve2 = BSplineCurve(D, self.curve.knots, self.curve.degree)
+        for tk, Xk in zip(T, X):
+            n_k = self.curve.unit_normal(tk)
+            r_k = temp_curve1.eval(tk) - Xk
+            d_k = np.dot(n_k, temp_curve2.eval(tk))
+            dphi += np.dot(n_k, r_k) * d_k
+        return dphi
+
+    ##
+    # function: dd_phi_TD
+    #
+    # description:
+    #   Computes the second derivative of the
+    #   line-search function phi for TDM.
+    #
+    # input:
+    #   - alpha : step size
+    #   - X : data points
+    #   - T : parameter values
+    #
+    # output:
+    #   - second derivative of phi
+    ##
+    def dd_phi_TD(self, alpha, X, T):
+        D = -self.dP_f_TD(X, T)
+        ddphi = 0.0
+        if isinstance(self.curve, BezierCurve):
+            temp_curve = BezierCurve(D)
+        elif isinstance(self.curve, BSplineCurve):
+            temp_curve = BSplineCurve(D, self.curve.knots, self.curve.degree)
+        for tk in T:
+            n_k = self.curve.unit_normal(tk)
+            d_k = np.dot(n_k, temp_curve.eval(tk))
+            ddphi += d_k * d_k
+        return ddphi
+
+    ##
+    # function: gradient_descent_TD
+    #
+    # description:
+    #   Performs gradient descent optimization for
+    #   the Tangent Distance Minimization (TDM).
+    #
+    #   At each iteration:
+    #   - the gradient is computed
+    #   - an optimal step size alpha is estimated
+    #     using Newton's method
+    #   - the control points are updated
+    #   - the footpoint parameters tk are recomputed
+    #
+    # input:
+    #   - X : data points
+    #   - T0 : initial parameter values
+    #   - alpha0 : initial step size
+    #   - max_iter : maximum number of iterations
+    #   - tol : convergence tolerance
+    #   - constraint : whether endpoint constraints
+    #                  are enforced
+    #
+    # output:
+    #   - optimized control points
+    #   - logarithm of iteration indices
+    #   - logarithm of average fitting errors
+    #   - logarithm of maximum fitting errors
+    ##
+    def gradient_descent_TD(self, X, T0, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
+        P = self.curve.P.copy()
+        if isinstance(self.curve, BezierCurve):
+            opt_curve = BezierCurve(P)
+        elif isinstance(self.curve, BSplineCurve):
+            opt_curve = BSplineCurve(P, self.curve.knots, self.curve.degree)
+        opt_tdm = self.__class__(opt_curve)
+
+        T = np.asarray(T0, dtype=float).copy()
+        log_avg_error, log_max_error, log_iter = [], [], []
+
+        for i in range(max_iter):
+            max_err = np.log10(opt_tdm.max_error(X, T))
+            log_iter.append(np.log10(i + 1))
+            log_avg_error.append(np.log10(opt_tdm.avg_error(X, T)))
+            log_max_error.append(max_err)
+
+            grad_P = opt_tdm.dP_f_TD(X, T)
+            norm_grad = np.linalg.norm(grad_P)
+
+            # Convergence test
+            if norm_grad < tol or max_err < np.log10(0.03):
+                print(f"Convergence achieved after {i+1} iterations")
+                break
+
+            # Descent direction
+            D = -grad_P
+
+            # Newton line-search
+            alpha = opt_tdm.newton_alpha(opt_tdm.d_phi_TD, opt_tdm.dd_phi_TD, X, T, alpha0, tol)
+
+            # Fallback step size
+            if alpha <= 0 or np.isnan(alpha):
+                alpha = alpha0
+
+            # Update control points
+            opt_tdm.curve.P += alpha * D
+            # constraints can be modified in need
+            if constraint == "opened":
+                opt_tdm.curve.P[0] = self.curve.P[0]
+                opt_tdm.curve.P[-1] = self.curve.P[-1]
+            elif constraint == "closed":
+                opt_tdm.curve.P[-1] = opt_tdm.curve.P[0].copy()
+
+            # Recompute footpoint parameters
+            T = opt_tdm.all_tk(X, initial_guesses=T)
+        return opt_tdm.curve.P, log_iter, log_avg_error, log_max_error
