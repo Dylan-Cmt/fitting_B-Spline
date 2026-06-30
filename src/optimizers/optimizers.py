@@ -660,3 +660,305 @@ class TDM(Optimizers):
             # Recompute footpoint parameters
             T = opt_tdm.all_tk(X, initial_guesses=T)
         return opt_tdm.curve.P, log_iter, log_avg_error, log_max_error
+
+class SDM(Optimizers):
+
+    ##
+    # function: signed_distance
+    #
+    # description:
+    #   Computes the signed distance between
+    #   a curve point P(t) and a data point Xk.
+    #
+    #   The sign is determined using the curve
+    #   normal direction:
+    #   - positive on one side of the curve
+    #   - negative on the other side
+    #
+    # input:
+    #   - Xk : data point
+    #   - t : parameter value
+    #
+    # output:
+    #   - signed distance value
+    ##
+    def signed_distance(self, Xk, t):
+        P_t = self.curve.eval(t)
+        d = np.linalg.norm(P_t - Xk)
+        n = self.curve.unit_normal(t)
+        sign = -np.sign(np.dot(P_t - Xk, n))
+        return d * sign
+
+    ##
+    # function: err_SD
+    #
+    # description:
+    #   Computes the Squared Distance Minimization (SDM)
+    #   local error associated with data point Xk.
+    #
+    #   Two cases are considered:
+    #
+    #   - if the signed distance is negative,
+    #     the full SDM formulation is used
+    #
+    #   - otherwise, the method falls back to the
+    #     tangent distance formulation
+    #
+    # input:
+    #   - Xk : data point
+    #   - t : parameter value
+    #
+    # output:
+    #   - SDM local error value
+    ##
+    def err_SD(self, Xk, t):
+        d = self.signed_distance(Xk, t)
+        if d < 0:
+            rho = self.curve.curvature_radius(t)
+            unit_T = self.curve.unit_tangent(t)
+            unit_N = self.curve.unit_normal(t)
+            P_t = self.curve.eval(t)
+            coeff = d / (d - rho)
+            diff = P_t - Xk
+
+            first_part = coeff * np.dot(diff, unit_T) ** 2
+            second_part = np.dot(diff, unit_N) ** 2
+            return first_part + second_part
+        else:
+            # return error_TD
+            P_t = self.curve.eval(t)
+            unit_N = self.curve.unit_normal(t)
+            return np.dot(P_t - Xk, unit_N) ** 2
+
+    ##
+    # function: f_SD
+    #
+    # description:
+    #   Computes the global Squared Distance Minimization
+    #   (SDM) objective function.
+    #
+    # input:
+    #   - X : data points
+    #   - T : parameter values
+    #
+    # output:
+    #   - SDM value
+    ##
+    def f_SD(self, X, T):
+        return 0.5 * sum(self.err_SD(X[k], T[k]) for k in range(len(T)))
+
+    ##
+    # function: dP_f_SD
+    #
+    # description:
+    #   Computes the gradient of the SDM objective
+    #   function with respect to the control points.
+    #
+    # input:
+    #   - X : data points
+    #   - T : parameter values
+    #
+    # output:
+    #   - gradient matrix
+    ##
+    def dP_f_SD(self, X, T):
+        m = self.curve.P.shape[0]
+        grad_P = np.zeros_like(self.curve.P)
+
+        for k in range(len(T)):
+            tk = T[k]
+            Xk = X[k]
+            signed_d = self.signed_distance(Xk, tk)
+            diff = self.curve.eval(tk) - Xk
+            unit_N = self.curve.unit_normal(tk)
+            d_projN = np.dot(unit_N, diff)
+
+            if signed_d < 0:
+                rho = self.curve.curvature_radius(tk)
+                unit_T = self.curve.unit_tangent(tk)
+                coeff = signed_d / (signed_d - rho)
+                d_projT = np.dot(unit_T, diff)
+                for i in range(m):
+                    if isinstance(self.curve, BezierCurve):
+                        B_ik = self.curve.bernstein_basis(i, self.curve.degree, tk)
+                    elif isinstance(self.curve, BSplineCurve):
+                        B_ik = self.curve.bspline_basis(i, self.curve.degree, tk)
+                    grad_P[i] += coeff * d_projT * B_ik * unit_T
+
+            for i in range(m):
+                if isinstance(self.curve, BezierCurve):
+                    B_ik = self.curve.bernstein_basis(i, self.curve.degree, tk)
+                elif isinstance(self.curve, BSplineCurve):
+                    B_ik = self.curve.bspline_basis(i, self.curve.degree, tk)
+                grad_P[i] += d_projN * B_ik * unit_N
+
+        return grad_P
+
+    ##
+    # function: phi_SD
+    #
+    # description:
+    #   Evaluates the line-search function phi
+    #   used in the Squared Distance Minimization (SDM).
+    #   This function is not explicitly used here, but
+    #   its derivatives are required for the
+    #   Newton line-search procedure.
+    ##
+    def phi_SD(self, alpha, X, T):
+        D = -self.dP_f_SD(X, T)
+        if isinstance(self.curve, BezierCurve):
+            temp_curve = BezierCurve(self.curve.P + alpha * D)
+        elif isinstance(self.curve, BSplineCurve):
+            temp_curve = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
+        temp_sdm = SDM(temp_curve)
+        return temp_sdm.f_SD(X, T)
+
+    ##
+    # function: d_phi_SD
+    #
+    # description:
+    #   Computes the first derivative of the
+    #   line-search function phi for SDM.
+    ##
+    def d_phi_SD(self, alpha, X, T):
+        D = -self.dP_f_SD(X, T)
+        dphi = 0.0
+
+        if isinstance(self.curve, BezierCurve):
+            temp_curve1 = BezierCurve(self.curve.P + alpha * D)
+            temp_curve2 = BezierCurve(D)
+        elif isinstance(self.curve, BSplineCurve):
+            temp_curve1 = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
+            temp_curve2 = BSplineCurve(D, self.curve.knots, self.curve.degree)
+
+        for k in range(len(T)):
+            tk = T[k]
+            Xk = X[k]
+            signed_d = self.signed_distance(Xk, tk)
+            diff = temp_curve1.eval(tk) - Xk
+
+            if signed_d < 0:
+                rho = self.curve.curvature_radius(tk)
+                unit_T = self.curve.unit_tangent(tk)
+                coeff = signed_d / (signed_d - rho)
+                r1 = coeff * np.dot(unit_T, diff)
+                d1 = np.dot(unit_T, temp_curve2.eval(tk))
+                dphi += r1 * d1
+
+            unit_N = self.curve.unit_normal(tk)
+            r = np.dot(unit_N, diff)
+            d = np.dot(unit_N, temp_curve2.eval(tk))
+            dphi += r * d
+
+        return dphi
+
+    ##
+    # function: dd_phi_SD
+    #
+    # description:
+    #   Computes the second derivative of the
+    #   line-search function phi for SDM.
+    ##
+    def dd_phi_SD(self, alpha, X, T):
+        D = -self.dP_f_SD(X, T)
+        ddphi = 0.0
+
+        if isinstance(self.curve, BezierCurve):
+            temp_curve = BezierCurve(D)
+        elif isinstance(self.curve, BSplineCurve):
+            temp_curve = BSplineCurve(D, self.curve.knots, self.curve.degree)
+
+        for k in range(len(T)):
+            tk = T[k]
+            Xk = X[k]
+            signed_d = self.signed_distance(Xk, tk)
+
+            if signed_d < 0:
+                rho = self.curve.curvature_radius(tk)
+                unit_T = self.curve.unit_tangent(tk)
+                coeff = signed_d / (signed_d - rho)
+                d = np.dot(unit_T, temp_curve.eval(tk))
+                ddphi += coeff * (d ** 2)
+
+            unit_N = self.curve.unit_normal(tk)
+            d_k = np.dot(unit_N, temp_curve.eval(tk))
+            ddphi += d_k ** 2
+
+        return ddphi
+
+    ##
+    # function: gradient_descent_SD
+    #
+    # description:
+    #   Performs gradient descent optimization for
+    #   the Squared Distance Minimization (SDM).
+    #
+    #   At each iteration:
+    #   - the gradient is computed
+    #   - an optimal step size alpha is estimated
+    #     using Newton's method
+    #   - the control points are updated
+    #   - the footpoint parameters tk are recomputed
+    #
+    # input:
+    #   - X : data points
+    #   - T0 : initial parameter values
+    #   - alpha0 : initial step size
+    #   - max_iter : maximum iterations
+    #   - tol : convergence tolerance
+    #   - constraint : for open or closed curves
+    #
+    # output:
+    #   - optimized control points
+    #   - logarithm of iteration indices
+    #   - logarithm of average fitting errors
+    #   - logarithm of maximum fitting errors
+    ##
+    def gradient_descent_SD(self, X, T0, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
+        P = self.curve.P.copy()
+        if isinstance(self.curve, BezierCurve):
+            opt_curve = BezierCurve(P)
+        elif isinstance(self.curve, BSplineCurve):
+            opt_curve = BSplineCurve(P, self.curve.knots, self.curve.degree)
+        opt_sdm = SDM(opt_curve)
+
+        T = np.asarray(T0, dtype=float).copy()
+        log_avg_error, log_max_error, log_iter = [], [], []
+
+        for i in range(max_iter):
+            max_err = np.log10(opt_sdm.max_error(X, T))
+            log_iter.append(np.log10(i + 1))
+            log_avg_error.append(np.log10(opt_sdm.avg_error(X, T)))
+            log_max_error.append(max_err)
+
+            grad_P = opt_sdm.dP_f_SD(X, T)
+            norm_grad = np.linalg.norm(grad_P)
+
+            # Convergence test
+            if norm_grad < tol or max_err < np.log10(0.03):
+                print(f"Convergence achieved after {i+1} iterations")
+                break
+
+            # Descent direction
+            D = -grad_P
+
+            # Newton line-search
+            alpha = opt_sdm.newton_alpha(opt_sdm.d_phi_SD, opt_sdm.dd_phi_SD, X, T, alpha0, tol)
+
+            # Fallback step size
+            if alpha <= 0 or np.isnan(alpha):
+                alpha = alpha0
+
+            # Update control points
+            opt_sdm.curve.P += alpha * D
+            # constraints can be modified in need
+            if constraint == "opened":
+                opt_sdm.curve.P[0] = self.curve.P[0]
+                opt_sdm.curve.P[-1] = self.curve.P[-1]
+            elif constraint == "closed":
+                opt_sdm.curve.P[-1] = opt_sdm.curve.P[0].copy()
+
+            # Recompute footpoint parameters
+            T = opt_sdm.all_tk(X, initial_guesses=T)
+
+        return opt_sdm.curve.P, log_iter, log_avg_error, log_max_error
