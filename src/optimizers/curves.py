@@ -508,7 +508,7 @@ class BSplineCurve(Curve):
     def eval(self, t):
         curve = np.zeros(self.P.shape[1])
         for i in range(len(self.P)):
-            N = self._bspline_basis(i, self.degree, t)
+            N = self.bspline_basis(i, self.degree, t)
             curve += N * self.P[i]
         return curve
 
