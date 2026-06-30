@@ -96,11 +96,12 @@ class Optimizers:
     ##
     def newton_tk(self, err_prim, err_primprim, Xk, initial_guess,tol=1e-6, max_iter=100):
         if isinstance(self.curve, BezierCurve):
-            t = np.clip(initial_guess, 0.0, 1.0)
+            t_min = 0
+            t_max = 1
         elif isinstance(self.curve, BSplineCurve):
             t_min = self.curve.knots[self.curve.degree]
             t_max = self.curve.knots[-(self.curve.degree + 1)]
-            t = np.clip(initial_guess, t_min + 1e-8, t_max - 1e-8)
+        t = np.clip(initial_guess, t_min + 1e-8, t_max - 1e-8)
         
         for _ in range(max_iter):
             Fp  = err_prim(Xk, t)
