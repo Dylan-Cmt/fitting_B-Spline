@@ -3,7 +3,7 @@ import pytest
 from hypothesis import given, strategies as st
 
 from src.optimizers.curves import BezierCurve, BSplineCurve
-from src.optimizers.optimizers import PDM, TDM, SDM
+from src.optimizers.optimizers import Optimizers, PDM, TDM, SDM
 
 
 STRAIGHT_BEZIER_POINTS = np.array([[0.0, 0.0], [1.0, 0.0]], dtype=float)
@@ -63,6 +63,25 @@ class TestBaseOptimizer:
         bad_guess = [0.9] * len(all_data)
         computed2 = pdm.all_tk(all_data, initial_guesses=bad_guess)
         assert np.allclose(computed2, t_true, atol=1e-6)
+
+    @pytest.mark.parametrize("curve_type", ["bezier", "bspline"])
+    def test_optimizer_constructor_builds_temp_curve_factory(self, curve_type):
+        if curve_type == "bezier":
+            curve = BezierCurve(STRAIGHT_BEZIER_POINTS)
+            new_points = np.array([[0.2, 0.1], [0.8, 0.1]], dtype=float)
+            optimizer = Optimizers(curve)
+            temp_curve = optimizer.temp_curve(new_points)
+            assert isinstance(temp_curve, BezierCurve)
+            assert np.allclose(temp_curve.P, new_points)
+        else:
+            curve = BSplineCurve(STRAIGHT_BSPLINE_POINTS, BSPLINE_KNOTS, BSPLINE_DEGREE)
+            new_points = np.array([[0.1, 0.0], [0.6, 0.0], [0.9, 0.0]], dtype=float)
+            optimizer = Optimizers(curve)
+            temp_curve = optimizer.temp_curve(new_points)
+            assert isinstance(temp_curve, BSplineCurve)
+            assert np.allclose(temp_curve.P, new_points)
+            assert np.allclose(temp_curve.knots, curve.knots)
+            assert temp_curve.degree == curve.degree
 
 
 class TestPDM:
