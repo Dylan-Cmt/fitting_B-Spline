@@ -262,10 +262,7 @@ class PDM(Optimizers):
         for k in range(n):
             d = self.curve.eval(T[k]) - X[k]
             for i in range(m):
-                if isinstance(self.curve, BezierCurve):
-                    B_ik = self.curve.bernstein_basis(i, self.curve.degree, T[k])
-                elif  isinstance(self.curve, BSplineCurve):
-                    B_ik = self.curve.bspline_basis(i, self.curve.degree, T[k])
+                B_ik = self.curve.basis(i, self.curve.degree, T[k])
                 grad_P[i] += d * B_ik
         return grad_P
     
@@ -495,10 +492,7 @@ class TDM(Optimizers):
             n_k = self.curve.unit_normal(T[k])
             d_proj = np.dot(n_k, diff)
             for i in range(m):
-                if isinstance(self.curve, BezierCurve):
-                    B_ik = self.curve.bernstein_basis(i, self.curve.degree, T[k])
-                elif isinstance(self.curve, BSplineCurve):
-                    B_ik = self.curve.bspline_basis(i, self.curve.degree, T[k])
+                B_ik = self.curve.basis(i, self.curve.degree, T[k])
                 grad_P[i] += d_proj * B_ik * n_k
         return grad_P
 
@@ -780,17 +774,14 @@ class SDM(Optimizers):
                 coeff = signed_d / (signed_d - rho)
                 d_projT = np.dot(unit_T, diff)
                 for i in range(m):
-                    if isinstance(self.curve, BezierCurve):
-                        B_ik = self.curve.bernstein_basis(i, self.curve.degree, tk)
-                    elif isinstance(self.curve, BSplineCurve):
-                        B_ik = self.curve.bspline_basis(i, self.curve.degree, tk)
+                    B_ik = self.curve.basis(i, self.curve.degree, tk)
                     grad_P[i] += coeff * d_projT * B_ik * unit_T
 
             for i in range(m):
                 if isinstance(self.curve, BezierCurve):
-                    B_ik = self.curve.bernstein_basis(i, self.curve.degree, tk)
+                    B_ik = self.curve.basis(i, self.curve.degree, tk)
                 elif isinstance(self.curve, BSplineCurve):
-                    B_ik = self.curve.bspline_basis(i, self.curve.degree, tk)
+                    B_ik = self.curve.basis(i, self.curve.degree, tk)
                 grad_P[i] += d_projN * B_ik * unit_N
 
         return grad_P

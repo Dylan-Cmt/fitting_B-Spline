@@ -10,6 +10,24 @@ from math import comb
 ##
 
 class Curve:
+
+    ##
+    # function: basis
+    #
+    # description:
+    #   Computes a basis for a Bézier or a BSpline curve
+    #
+    # input:
+    #   - i : basis index
+    #   - n : polynomial degree
+    #   - t : parameter in [0,1]
+    #
+    # output:
+    #   - Basis for Bézier or BSpline curve
+    ##
+    def basis(self, i, n, t):
+        raise NotImplementedError()
+
     ##
     # function: eval
     #
@@ -197,7 +215,7 @@ class BezierCurve(Curve):
         self.degree = len(self.P) - 1
 
     ##
-    # function: bernstein_basis
+    # function: basis
     #
     # description:
     #   Computes a Bernstein basis polynomial:
@@ -215,7 +233,7 @@ class BezierCurve(Curve):
     # errors:
     #   - ValueError if n < 0
     ##
-    def bernstein_basis(self, i, n, t):
+    def basis(self, i, n, t):
         if n < 0:
             raise ValueError("Bezier degree must be non-negative")
         if i < 0 or i > n:
@@ -240,7 +258,7 @@ class BezierCurve(Curve):
     ##
     def _bernstein_basis_vector(self, n, t):
         t = np.asarray(t, dtype=float)
-        return np.array([self.bernstein_basis(i, n, t) for i in range(n + 1)])
+        return np.array([self.basis(i, n, t) for i in range(n + 1)])
 
     ##
     # function: eval
@@ -398,7 +416,7 @@ class BSplineCurve(Curve):
             raise ValueError("Control points cannot be empty")
 
     ##
-    # function: bspline_basis
+    # function: basis
     #
     # description:
     #   Computes the B-spline basis function N_{i,p}(t) recursively
@@ -412,7 +430,7 @@ class BSplineCurve(Curve):
     # output:
     #   - basis function value N_{i,p}(t)
     ##
-    def bspline_basis(self, i, p, t):
+    def basis(self, i, p, t):
         knots = self.knots
         n = len(knots) - 1
         if p == 0:
@@ -423,15 +441,15 @@ class BSplineCurve(Curve):
         if (i + p) < n:
             denom1 = knots[i + p] - knots[i]
             if denom1 != 0:
-                first = (t - knots[i]) / denom1 * self.bspline_basis(i, p - 1, t)
+                first = (t - knots[i]) / denom1 * self.basis(i, p - 1, t)
         if (i + p + 1) < n:
             denom2 = knots[i + p + 1] - knots[i + 1]
             if denom2 != 0:
-                second = (knots[i + p + 1] - t) / denom2 * self.bspline_basis(i + 1, p - 1, t)
+                second = (knots[i + p + 1] - t) / denom2 * self.basis(i + 1, p - 1, t)
         return first + second
 
     ##
-    # function: _bspline_basis_dt
+    # function: _basis_dt
     #
     # description:
     #   Computes the first derivative of the B-spline basis function.
@@ -444,21 +462,21 @@ class BSplineCurve(Curve):
     # output:
     #   - first derivative of N_{i,p}(t)
     ##
-    def _bspline_basis_dt(self, i, p, t):
+    def _basis_dt(self, i, p, t):
         if p <= 0:
             return 0.0
         knots = self.knots
         first, second = 0.0, 0.0
         denom1 = knots[i + p] - knots[i]
         if denom1 != 0:
-            first = p / denom1 * self.bspline_basis(i, p - 1, t)
+            first = p / denom1 * self.basis(i, p - 1, t)
         denom2 = knots[i + p + 1] - knots[i + 1]
         if denom2 != 0:
-            second = p / denom2 * self.bspline_basis(i + 1, p - 1, t)
+            second = p / denom2 * self.basis(i + 1, p - 1, t)
         return first - second
     
     ##
-    # function: _bspline_basis_dtt
+    # function: _basis_dtt
     #
     # description:
     #   Computes the second derivative of the B-spline basis function.
@@ -471,14 +489,14 @@ class BSplineCurve(Curve):
     # output:
     #   - first derivative of N_{i,p}(t)
     ##
-    def _bspline_basis_dtt(self, i, p, t):
+    def _basis_dtt(self, i, p, t):
         if p <= 1:
             return 0.0
         knots = self.knots
         first, second, third = 0.0, 0.0, 0.0
         denom1 = (knots[i + p] - knots[i]) * (knots[i + p - 1] - knots[i])
         if denom1 != 0:
-            first = p * (p - 1) / denom1 * self.bspline_basis(i, p - 2, t)
+            first = p * (p - 1) / denom1 * self.basis(i, p - 2, t)
         denom2a = (knots[i + p] - knots[i]) * (knots[i + p] - knots[i + 1])
         denom2b = (knots[i + p + 1] - knots[i + 1]) * (knots[i + p] - knots[i + 1])
         coeff2 = 0.0
@@ -486,10 +504,10 @@ class BSplineCurve(Curve):
             coeff2 += 1.0 / denom2a
         if denom2b != 0:
             coeff2 += 1.0 / denom2b
-        second = p * (p - 1) * coeff2 * self.bspline_basis(i + 1, p - 2, t)
+        second = p * (p - 1) * coeff2 * self.basis(i + 1, p - 2, t)
         denom3 = (knots[i + p + 1] - knots[i + 1]) * (knots[i + p + 1] - knots[i + 2])
         if denom3 != 0:
-            third = p * (p - 1) / denom3 * self.bspline_basis(i + 2, p - 2, t)
+            third = p * (p - 1) / denom3 * self.basis(i + 2, p - 2, t)
         return first - second + third
 
     ##
@@ -508,7 +526,7 @@ class BSplineCurve(Curve):
     def eval(self, t):
         curve = np.zeros(self.P.shape[1])
         for i in range(len(self.P)):
-            N = self.bspline_basis(i, self.degree, t)
+            N = self.basis(i, self.degree, t)
             curve += N * self.P[i]
         return curve
 
@@ -528,7 +546,7 @@ class BSplineCurve(Curve):
     def derivative(self, t):
         vec = np.zeros(self.P.shape[1])
         for i in range(len(self.P)):
-            N = self._bspline_basis_dt(i, self.degree, t)
+            N = self._basis_dt(i, self.degree, t)
             vec += N * self.P[i]
         return vec
 
@@ -548,7 +566,7 @@ class BSplineCurve(Curve):
     def second_derivative(self, t):
         vec = np.zeros(self.P.shape[1])
         for i in range(len(self.P)):
-            N = self._bspline_basis_dtt(i, self.degree, t)
+            N = self._basis_dtt(i, self.degree, t)
             vec += N * self.P[i]
         return vec
 
