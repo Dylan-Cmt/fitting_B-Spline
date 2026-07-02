@@ -12,6 +12,8 @@ from src.optimizers.curves import Curve, BezierCurve, BSplineCurve
 def test_curve_abstract_methods_raise():
     c = Curve()
     with pytest.raises(NotImplementedError):
+        c.basis(0, 0, 0.5)
+    with pytest.raises(NotImplementedError):
         c.eval(0.5)
     with pytest.raises(NotImplementedError):
         c.derivative(0.5)
@@ -37,7 +39,7 @@ def test_bernstein_basis_partition_and_positivity(n, t):
     # if n == 0 we still want a valid curve, use single control point
     ctrl = np.zeros((max(1, n + 1), 2))
     B = BezierCurve(ctrl)
-    values = [B.bernstein_basis(i, n, t) for i in range(n + 1)]
+    values = [B.basis(i, n, t) for i in range(n + 1)]
     assert sum(values) == pytest.approx(1.0)
     assert all(v >= 0.0 for v in values)
 
@@ -153,7 +155,7 @@ def test_bspline_basis_partition_of_unity_and_positivity(degree, t):
     n = len(STRAIGHT_B)
     knots = _knots_for(n, degree)
     bsp = BSplineCurve(STRAIGHT_B, knots, degree)
-    values = [bsp.bspline_basis(i, degree, t) for i in range(n)]
+    values = [bsp.basis(i, degree, t) for i in range(n)]
     assert sum(values) == pytest.approx(1.0)
     assert all(v >= -1e-12 for v in values)
 
@@ -164,20 +166,20 @@ def test_bspline_basis_exact_values_nurbs_book(t):
     knots = np.array([0, 0, 0, 1, 1, 1], dtype=float)
     bsp = BSplineCurve(np.zeros((3, 2)), knots, 2)
     # N_{0,0}=0, N_{1,0}=0, N_{2,0}=1, N_{3,0}=0, N_{4,0}=0
-    assert bsp.bspline_basis(0, 0, t) == pytest.approx(0.0)
-    assert bsp.bspline_basis(1, 0, t) == pytest.approx(0.0)
-    assert bsp.bspline_basis(2, 0, t) == pytest.approx(1.0)
-    assert bsp.bspline_basis(3, 0, t) == pytest.approx(0.0)
-    assert bsp.bspline_basis(4, 0, t) == pytest.approx(0.0)
+    assert bsp.basis(0, 0, t) == pytest.approx(0.0)
+    assert bsp.basis(1, 0, t) == pytest.approx(0.0)
+    assert bsp.basis(2, 0, t) == pytest.approx(1.0)
+    assert bsp.basis(3, 0, t) == pytest.approx(0.0)
+    assert bsp.basis(4, 0, t) == pytest.approx(0.0)
     # degree 1
-    assert bsp.bspline_basis(0, 1, t) == pytest.approx(0.0)
-    assert bsp.bspline_basis(1, 1, t) == pytest.approx(1 - t)
-    assert bsp.bspline_basis(2, 1, t) == pytest.approx(t)
-    assert bsp.bspline_basis(3, 1, t) == pytest.approx(0.0)
+    assert bsp.basis(0, 1, t) == pytest.approx(0.0)
+    assert bsp.basis(1, 1, t) == pytest.approx(1 - t)
+    assert bsp.basis(2, 1, t) == pytest.approx(t)
+    assert bsp.basis(3, 1, t) == pytest.approx(0.0)
     # degree 2
-    assert bsp.bspline_basis(0, 2, t) == pytest.approx((1 - t) ** 2)
-    assert bsp.bspline_basis(1, 2, t) == pytest.approx(2 * t * (1 - t))
-    assert bsp.bspline_basis(2, 2, t) == pytest.approx(t ** 2)
+    assert bsp.basis(0, 2, t) == pytest.approx((1 - t) ** 2)
+    assert bsp.basis(1, 2, t) == pytest.approx(2 * t * (1 - t))
+    assert bsp.basis(2, 2, t) == pytest.approx(t ** 2)
 
 
 @given(degree=st.integers(0, 5), t=st.floats(0.0, 1.0))
@@ -186,10 +188,10 @@ def test_bspline_basis_derivative_partition_of_unity(degree, t):
     knots = _knots_for(n, degree)
     bsp = BSplineCurve(STRAIGHT_B, knots, degree)
     # first derivative sum must be zero
-    values_dt = [bsp._bspline_basis_dt(i, degree, t) for i in range(n)]
+    values_dt = [bsp._basis_dt(i, degree, t) for i in range(n)]
     assert sum(values_dt) == pytest.approx(0.0)
     # second derivative sum must be zero
-    values_dtt = [bsp._bspline_basis_dtt(i, degree, t) for i in range(n)]
+    values_dtt = [bsp._basis_dtt(i, degree, t) for i in range(n)]
     assert sum(values_dtt) == pytest.approx(0.0)
 
 
@@ -211,7 +213,7 @@ def test_bspline_curve_eval_and_monotony(degree, t):
     bsp = BSplineCurve(STRAIGHT_B, knots, degree)
     P_t = bsp.eval(t)
     # x coordinate equals convex combination of control x's
-    xs = [bsp.bspline_basis(i, degree, t) * (i / (n - 1)) for i in range(n)]
+    xs = [bsp.basis(i, degree, t) * (i / (n - 1)) for i in range(n)]
     assert P_t[0] == pytest.approx(sum(xs))
     assert P_t[1] == pytest.approx(0.0)
     # monotony on straight line
