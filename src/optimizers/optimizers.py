@@ -19,6 +19,10 @@ class Optimizers:
         self.curve = curve
         if self.curve.degree < 0:
             raise ValueError("Curve cannot have negative degree")
+        if isinstance(curve, BezierCurve):
+            self.temp_curve = lambda P: BezierCurve(P)
+        elif isinstance(curve, BSplineCurve):
+            self.temp_curve = lambda P: BSplineCurve(P,curve.knots,curve.degree,)
 
     ##
     # function: err_PD
@@ -286,10 +290,7 @@ class PDM(Optimizers):
     ##
     def phi_PD(self, alpha, X, T):
         D = -self.dP_f_PD(X, T)
-        if isinstance(self.curve, BezierCurve):
-            temp_curve = BezierCurve(self.curve.P + alpha * D)
-        elif  isinstance(self.curve, BSplineCurve):
-            temp_curve = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
+        temp_curve = self.temp_curve(self.curve.P + alpha * D)
         temp_PDM = PDM(temp_curve)
         return temp_PDM.f_PD(X, T)
     
@@ -314,12 +315,8 @@ class PDM(Optimizers):
     def d_phi_PD(self, alpha, X, T):
         D = -self.dP_f_PD(X, T)
         dphi = 0.0
-        if isinstance(self.curve, BezierCurve):
-            temp_curve1 = BezierCurve(self.curve.P + alpha * D)
-            temp_curve2 = BezierCurve(D)
-        elif  isinstance(self.curve, BSplineCurve):
-            temp_curve1 = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
-            temp_curve2 = BSplineCurve(D, self.curve.knots, self.curve.degree)
+        temp_curve1 = self.temp_curve(self.curve.P + alpha * D)
+        temp_curve2 = self.temp_curve(D)
         for tk, Xk in zip(T, X):
             r = temp_curve1.eval(tk) - Xk
             d = temp_curve2.eval(tk)
@@ -344,10 +341,7 @@ class PDM(Optimizers):
     def dd_phi_PD(self, alpha, X, T):
         D = -self.dP_f_PD(X, T)
         ddphi = 0.0
-        if isinstance(self.curve, BezierCurve):
-            temp_curve = BezierCurve(D)
-        elif  isinstance(self.curve, BSplineCurve):
-            temp_curve = BSplineCurve(D, self.curve.knots, self.curve.degree)
+        temp_curve = self.temp_curve(D)
         for tk in T:
             d = temp_curve.eval(tk)
             ddphi += np.dot(d, d)
@@ -384,10 +378,7 @@ class PDM(Optimizers):
     ##
     def gradient_descent_PD(self, X, T0, alpha0=0.1,max_iter=100,tol=1e-6,constraint="opened"):
         P = self.curve.P.copy()
-        if isinstance(self.curve, BezierCurve):
-            opt_curve = BezierCurve(P)
-        elif isinstance(self.curve, BSplineCurve):
-            opt_curve = BSplineCurve(P, self.curve.knots, self.curve.degree)
+        opt_curve = self.temp_curve(P)
         opt_pdm = PDM(opt_curve)
 
         T = np.asarray(T0, dtype=float).copy()
@@ -513,10 +504,7 @@ class TDM(Optimizers):
     ##
     def phi_TD(self, alpha, X, T):
         D = -self.dP_f_TD(X, T)
-        if isinstance(self.curve, BezierCurve):
-            temp_curve = BezierCurve(self.curve.P + alpha * D)
-        elif isinstance(self.curve, BSplineCurve):
-            temp_curve = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
+        temp_curve = self.temp_curve(self.curve.P + alpha * D)
         temp_tdm = TDM(temp_curve)
         return temp_tdm.f_TD(X, T)
 
@@ -538,12 +526,8 @@ class TDM(Optimizers):
     def d_phi_TD(self, alpha, X, T):
         D = -self.dP_f_TD(X, T)
         dphi = 0.0
-        if isinstance(self.curve, BezierCurve):
-            temp_curve1 = BezierCurve(self.curve.P + alpha * D)
-            temp_curve2 = BezierCurve(D)
-        elif isinstance(self.curve, BSplineCurve):
-            temp_curve1 = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
-            temp_curve2 = BSplineCurve(D, self.curve.knots, self.curve.degree)
+        temp_curve1 = self.temp_curve(self.curve.P + alpha * D)
+        temp_curve2 = self.temp_curve(D)
         for tk, Xk in zip(T, X):
             n_k = self.curve.unit_normal(tk)
             r_k = temp_curve1.eval(tk) - Xk
@@ -569,10 +553,7 @@ class TDM(Optimizers):
     def dd_phi_TD(self, alpha, X, T):
         D = -self.dP_f_TD(X, T)
         ddphi = 0.0
-        if isinstance(self.curve, BezierCurve):
-            temp_curve = BezierCurve(D)
-        elif isinstance(self.curve, BSplineCurve):
-            temp_curve = BSplineCurve(D, self.curve.knots, self.curve.degree)
+        temp_curve = self.temp_curve(D)
         for tk in T:
             n_k = self.curve.unit_normal(tk)
             d_k = np.dot(n_k, temp_curve.eval(tk))
@@ -610,11 +591,8 @@ class TDM(Optimizers):
     ##
     def gradient_descent_TD(self, X, T0, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
         P = self.curve.P.copy()
-        if isinstance(self.curve, BezierCurve):
-            opt_curve = BezierCurve(P)
-        elif isinstance(self.curve, BSplineCurve):
-            opt_curve = BSplineCurve(P, self.curve.knots, self.curve.degree)
-        opt_tdm = self.__class__(opt_curve)
+        opt_curve = self.temp_curve(P)
+        opt_tdm = TDM(opt_curve)
 
         T = np.asarray(T0, dtype=float).copy()
         log_avg_error, log_max_error, log_iter = [], [], []
@@ -778,10 +756,7 @@ class SDM(Optimizers):
                     grad_P[i] += coeff * d_projT * B_ik * unit_T
 
             for i in range(m):
-                if isinstance(self.curve, BezierCurve):
-                    B_ik = self.curve.basis(i, self.curve.degree, tk)
-                elif isinstance(self.curve, BSplineCurve):
-                    B_ik = self.curve.basis(i, self.curve.degree, tk)
+                B_ik = self.curve.basis(i, self.curve.degree, tk)
                 grad_P[i] += d_projN * B_ik * unit_N
 
         return grad_P
@@ -798,10 +773,7 @@ class SDM(Optimizers):
     ##
     def phi_SD(self, alpha, X, T):
         D = -self.dP_f_SD(X, T)
-        if isinstance(self.curve, BezierCurve):
-            temp_curve = BezierCurve(self.curve.P + alpha * D)
-        elif isinstance(self.curve, BSplineCurve):
-            temp_curve = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
+        temp_curve = self.temp_curve(self.curve.P + alpha * D)
         temp_sdm = SDM(temp_curve)
         return temp_sdm.f_SD(X, T)
 
@@ -816,12 +788,8 @@ class SDM(Optimizers):
         D = -self.dP_f_SD(X, T)
         dphi = 0.0
 
-        if isinstance(self.curve, BezierCurve):
-            temp_curve1 = BezierCurve(self.curve.P + alpha * D)
-            temp_curve2 = BezierCurve(D)
-        elif isinstance(self.curve, BSplineCurve):
-            temp_curve1 = BSplineCurve(self.curve.P + alpha * D, self.curve.knots, self.curve.degree)
-            temp_curve2 = BSplineCurve(D, self.curve.knots, self.curve.degree)
+        temp_curve1 = self.temp_curve(self.curve.P + alpha * D)
+        temp_curve2 = self.temp_curve(D)
 
         for k in range(len(T)):
             tk = T[k]
@@ -855,10 +823,7 @@ class SDM(Optimizers):
         D = -self.dP_f_SD(X, T)
         ddphi = 0.0
 
-        if isinstance(self.curve, BezierCurve):
-            temp_curve = BezierCurve(D)
-        elif isinstance(self.curve, BSplineCurve):
-            temp_curve = BSplineCurve(D, self.curve.knots, self.curve.degree)
+        temp_curve = self.temp_curve(D)
 
         for k in range(len(T)):
             tk = T[k]
@@ -908,10 +873,7 @@ class SDM(Optimizers):
     ##
     def gradient_descent_SD(self, X, T0, alpha0=0.1, max_iter=100, tol=1e-6, constraint="opened"):
         P = self.curve.P.copy()
-        if isinstance(self.curve, BezierCurve):
-            opt_curve = BezierCurve(P)
-        elif isinstance(self.curve, BSplineCurve):
-            opt_curve = BSplineCurve(P, self.curve.knots, self.curve.degree)
+        opt_curve = self.temp_curve(P)
         opt_sdm = SDM(opt_curve)
 
         T = np.asarray(T0, dtype=float).copy()
